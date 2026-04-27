@@ -44,7 +44,7 @@ class AttendanceController extends Controller
      */
     public function show($id)
     {
-        $record = AttendanceRecord::with(['user', 'activity', 'tree', 'sourceTree'])
+        $record = AttendanceRecord::with(['user', 'activity', 'tree'])
             ->find($id);
 
         if (!$record) {
@@ -69,9 +69,8 @@ class AttendanceController extends Controller
         $validator = Validator::make($request->all(), [
             'activity_id' => 'required|exists:planting_activities,id',
             'user_id' => 'required|exists:users,id',
-            'source_tree_id' => 'required|exists:trees,id',
-            'status' => 'required|in:present,absent',
-            'tree_id' => 'nullable|exists:trees,id',
+            'attendance' => 'required|in:present,absent',
+            'tree_id' => 'required|exists:trees,id',
         ]);
 
         if ($validator->fails()) {
@@ -95,11 +94,9 @@ class AttendanceController extends Controller
         }
 
         $record = AttendanceRecord::create([
-            'id' => (string) Str::uuid(),
             'activity_id' => $request->activity_id,
             'user_id' => $request->user_id,
-            'source_tree_id' => $request->source_tree_id,
-            'status' => $request->status,
+            'attendance' => $request->attendance,
             'tree_id' => $request->tree_id,
             'created_at' => now(),
         ]);
@@ -126,7 +123,7 @@ class AttendanceController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:present,absent',
+            'attendance' => 'required|in:present,absent',
             'tree_id' => 'nullable|exists:trees,id',
         ]);
 
@@ -139,7 +136,7 @@ class AttendanceController extends Controller
         }
 
         $record->update([
-            'status' => $request->status,
+            'attendance' => $request->attendance,
             'tree_id' => $request->tree_id ?? $record->tree_id,
         ]);
 
@@ -190,11 +187,11 @@ class AttendanceController extends Controller
         }
 
         $present = AttendanceRecord::where('activity_id', $request->activity_id)
-            ->where('status', 'present')
+            ->where('attendance', 'present')
             ->count();
 
         $absent = AttendanceRecord::where('activity_id', $request->activity_id)
-            ->where('status', 'absent')
+            ->where('attendance', 'absent')
             ->count();
 
         $total = AttendanceRecord::where('activity_id', $request->activity_id)->count();

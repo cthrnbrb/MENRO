@@ -41,4 +41,9 @@ class Tree extends Model
     {
         return $this->hasMany(MonitoringRecord::class);
     }
+
+    public function attendanceRecords()
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
 }

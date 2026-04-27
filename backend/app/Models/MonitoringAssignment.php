@@ -26,6 +26,9 @@ class MonitoringAssignment extends Model
         'is_completed' => 'boolean',
     ];
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     public function activity()
     {
         return $this->belongsTo(PlantingActivity::class, 'activity_id');

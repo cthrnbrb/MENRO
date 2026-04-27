@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->integer('tree_id', false, true);
             $table->foreign('tree_id')->references('id')->on('trees')->onDelete('cascade');
-            $table->enum('status', ['present', 'absent']);
+            $table->enum('attendance', ['present', 'absent']);
             $table->timestamp('created_at')->nullable();
         });
     }

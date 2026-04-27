@@ -10,13 +10,9 @@ return new class extends Migration
     {
         Schema::create('planting_activities', function (Blueprint $table) {
             $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('planter_id', false, true);
-            $table->foreign('planter_id')->references('id')->on('users')->onDelete('cascade');
-            $table->integer('admin_id', false, true);
-            $table->foreign('admin_id')->references('id')->on('users')->onDelete('cascade');
+            $table->integer('organization_id', false, true);
+            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
             $table->string('location', 50);
-            $table->decimal('latitude', 10, 7);
-            $table->decimal('longitude', 10, 7);
             $table->integer('expected_tree_count');
             $table->string('tree_species', 25);
             $table->date('scheduled_date');

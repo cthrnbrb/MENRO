@@ -15,11 +15,11 @@ return new class extends Migration
             $table->enum('role', ['admin', 'monitoring staff', 'organization', 'couple']);
 
             $table->string('first_name', 50);
-            $table->string('middle_name', 50)->nullable();
+            $table->string('middle_name', 50);
             $table->string('last_name', 50);
             $table->string('contact_number', 11);
             $table->text('address');
-            
+
             $table->integer('organization_id', false, true)->nullable();
             $table->string('or_number', 50)->nullable();
             $table->timestamp('created_at')->nullable();

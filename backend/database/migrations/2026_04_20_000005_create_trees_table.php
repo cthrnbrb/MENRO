@@ -14,11 +14,11 @@ return new class extends Migration
             $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
             $table->integer('planter_id', false, true);
             $table->foreign('planter_id')->references('id')->on('users')->onDelete('cascade');
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
-            $table->text('photo')->nullable();
-            $table->timestamp('planted_at')->nullable();
-            $table->timestamp('synced_at')->nullable();
+            $table->decimal('latitude', 10, 7);
+            $table->decimal('longitude', 10, 7);
+            $table->text('photo');
+            $table->timestamp('planted_at');
+            $table->timestamp('synced_at');
         });
     }
 

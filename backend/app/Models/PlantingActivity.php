@@ -13,8 +13,7 @@ class PlantingActivity extends Model
     protected $table = 'planting_activities';
 
     protected $fillable = [
-        'planter_id',
-        'admin_id',
+        'organization_id',
         'location',
         'expected_tree_count',
         'tree_species',
@@ -25,14 +24,9 @@ class PlantingActivity extends Model
         'scheduled_date' => 'date',
     ];
 
-    public function planter()
+    public function organization()
     {
-        return $this->belongsTo(User::class, 'planter_id');
-    }
-
-    public function admin()
-    {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->belongsTo(Organization::class, 'organization_id');
     }
 
     public function trees()
@@ -43,5 +37,10 @@ class PlantingActivity extends Model
     public function monitoringAssignments()
     {
         return $this->hasMany(MonitoringAssignment::class, 'activity_id');
+    }
+
+    public function attendanceRecords()
+    {
+        return $this->hasMany(AttendanceRecord::class, 'activity_id');
     }
 }

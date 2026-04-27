@@ -14,8 +14,7 @@ class AttendanceRecord extends Model
     protected $fillable = [
         'activity_id',
         'user_id',
-        'source_tree_id',
-        'status',
+        'attendance',
         'tree_id',
         'created_at',
     ];
@@ -38,14 +37,6 @@ class AttendanceRecord extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-
-    /**
-     * The tree that generated this attendance record
-     */
-    public function sourceTree()
-    {
-        return $this->belongsTo(Tree::class, 'source_tree_id');
     }
 
     /**

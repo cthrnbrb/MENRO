@@ -10,15 +10,14 @@ class PlantingActivityController extends Controller
 {
     public function index()
     {
-        $activities = PlantingActivity::with(['organization', 'couple', 'admin'])->get();
+        $activities = PlantingActivity::with(['organization'])->get();
         return response()->json($activities);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'organization_id' => 'nullable|string|exists:organizations,id',
-            'couple_id' => 'nullable|string|exists:couples,id',
+            'organization_id' => 'required|integer|exists:organizations,id',
             'location' => 'required|string|max:255',
             'expected_tree_count' => 'required|integer|min:1',
             'tree_species' => 'required|string|max:255',
@@ -26,22 +25,19 @@ class PlantingActivityController extends Controller
         ]);
 
         $activity = PlantingActivity::create([
-            'id' => (string) Str::uuid(),
-            'organization_id' => $validated['organization_id'] ?? null,
-            'couple_id' => $validated['couple_id'] ?? null,
-            'admin_id' => auth()->id(),
+            'organization_id' => $validated['organization_id'],
             'location' => $validated['location'],
             'expected_tree_count' => $validated['expected_tree_count'],
             'tree_species' => $validated['tree_species'],
             'scheduled_date' => $validated['scheduled_date'],
         ]);
 
-        return response()->json($activity->load(['organization', 'couple', 'admin']), 201);
+        return response()->json($activity->load(['organization']), 201);
     }
 
     public function show($id)
     {
-        $activity = PlantingActivity::with(['organization', 'couple', 'admin', 'trees'])->findOrFail($id);
+        $activity = PlantingActivity::with(['organization', 'trees'])->findOrFail($id);
         return response()->json($activity);
     }
 
@@ -50,8 +46,7 @@ class PlantingActivityController extends Controller
         $activity = PlantingActivity::findOrFail($id);
 
         $validated = $request->validate([
-            'organization_id' => 'nullable|string|exists:organizations,id',
-            'couple_id' => 'nullable|string|exists:couples,id',
+            'organization_id' => 'nullable|integer|exists:organizations,id',
             'location' => 'nullable|string|max:255',
             'expected_tree_count' => 'nullable|integer|min:1',
             'tree_species' => 'nullable|string|max:255',
@@ -60,7 +55,7 @@ class PlantingActivityController extends Controller
 
         $activity->update($validated);
 
-        return response()->json($activity->load(['organization', 'couple', 'admin']));
+        return response()->json($activity->load(['organization']));
     }
 
     public function destroy($id)

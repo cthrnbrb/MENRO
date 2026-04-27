@@ -14,12 +14,12 @@ return new class extends Migration
             $table->foreign('tree_id')->references('id')->on('trees')->onDelete('cascade');
             $table->integer('staff_id', false, true);
             $table->foreign('staff_id')->references('id')->on('users')->onDelete('cascade');
-            $table->integer('assignment_id', false, true);
+            $table->char('assignment_id', 36);
             $table->foreign('assignment_id')->references('id')->on('monitoring_assignments')->onDelete('cascade');
             $table->enum('status', ['alive', 'dead']);
-            $table->text('photo')->nullable();
-            $table->timestamp('checked_at')->nullable();
-            $table->timestamp('synced_at')->nullable();
+            $table->text('photo');
+            $table->timestamp('checked_at');
+            $table->timestamp('synced_at');
         });
     }
 

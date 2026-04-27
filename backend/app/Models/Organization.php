@@ -11,7 +11,6 @@ class Organization extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
         'org_name',
         'president_first_name',
         'president_middle_name',
@@ -19,8 +18,13 @@ class Organization extends Model
         'organization_code',
     ];
 
-    public function user()
+    public function users()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(User::class);
+    }
+
+    public function plantingActivities()
+    {
+        return $this->hasMany(PlantingActivity::class, 'organization_id');
     }
 }

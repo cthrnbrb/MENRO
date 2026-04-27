@@ -224,8 +224,8 @@ class TreeController extends Controller
                         'user_id' => auth()->id(),
                     ],
                     [
-                        'source_tree_id' => $tree->id,
-                        'status' => 'present'
+                        'tree_id' => $tree->id,
+                        'attendance' => 'present'
                     ]
                 );
 

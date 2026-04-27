@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('monitoring_assignments', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
+            $table->char('id', 36)->primary();
             $table->integer('activity_id', false, true);
             $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
             $table->integer('staff_id', false, true);

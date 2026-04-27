@@ -22,6 +22,7 @@ class User extends Authenticatable
         'contact_number',
         'address',
         'organization_id',
+        'or_number',
         'photo',
     ];
 
@@ -31,6 +32,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'password' => 'hashed',
+        'organization_id' => 'integer',
     ];
 
     public function getNameAttribute(): string
@@ -40,7 +42,7 @@ class User extends Authenticatable
 
     public function organization()
     {
-        return $this->hasOne(Organization::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function couple()
@@ -63,13 +65,4 @@ class User extends Authenticatable
         return $this->hasMany(MonitoringRecord::class, 'staff_id');
     }
 
-    public function plantingActivitiesAsAdmin()
-    {
-        return $this->hasMany(PlantingActivity::class, 'admin_id');
-    }
-
-    public function plantingActivitiesAsPlanter()
-    {
-        return $this->hasMany(PlantingActivity::class, 'planter_id');
-    }
 }
