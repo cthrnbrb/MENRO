@@ -15,6 +15,7 @@ class Organization extends Model
         'president_first_name',
         'president_middle_name',
         'president_last_name',
+        'president_email',
         'organization_code',
     ];
 

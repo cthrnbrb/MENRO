@@ -257,10 +257,28 @@ class TreeController extends Controller
      */
     public function myTrees()
     {
-        $trees = Tree::with(['activity', 'monitoringRecords'])
-            ->where('planter_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $user = auth()->user();
+
+        // For couples, get trees from their organization's activities
+        if ($user->role === 'couple') {
+            if ($user->organization_id) {
+                $trees = Tree::with(['activity', 'monitoringRecords'])
+                    ->whereHas('activity', function ($query) use ($user) {
+                        $query->where('organization_id', $user->organization_id);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } else {
+                // Couple without organization - return empty
+                $trees = collect();
+            }
+        } else {
+            // For planters, get their own trees
+            $trees = Tree::with(['activity', 'monitoringRecords'])
+                ->where('planter_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         return response()->json([
             'success' => true,

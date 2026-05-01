@@ -177,18 +177,25 @@ class TreePlanterController extends Controller
                     'address' => $request->address,
                 ]);
                 
-                // Create first tree planter user with couple_id
+                // Create first tree planter user
                 $user = User::create([
                     'first_name' => $request->first_name,
                     'middle_name' => $request->middle_name,
                     'last_name' => $request->last_name,
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
-                    'role' => 'tree planter',
                     'contact_number' => $request->contact_number,
-                    'couple_id' => $couple->id,
+                    'address' => $request->address,
                 ]);
-                
+
+                // Create user-organization relationship for first user
+                UserOrganization::create([
+                    'user_id' => $user->id,
+                    'organization_id' => $request->organization_id,
+                    'role' => 'couple',
+                    'joined_at' => now(),
+                ]);
+
                 // Create second tree planter user for couple
                 $user2 = User::create([
                     'first_name' => $request->person2_first_name,
@@ -196,21 +203,35 @@ class TreePlanterController extends Controller
                     'last_name' => $request->person2_last_name,
                     'email' => $request->person2_email,
                     'password' => Hash::make($request->person2_password),
-                    'role' => 'tree planter',
                     'contact_number' => $request->contact_number,
-                    'couple_id' => $couple->id,
+                    'address' => $request->address,
+                ]);
+
+                // Create user-organization relationship for second user
+                UserOrganization::create([
+                    'user_id' => $user2->id,
+                    'organization_id' => $request->organization_id,
+                    'role' => 'couple',
+                    'joined_at' => now(),
                 ]);
             } else {
-                // Organization type - create single user with organization_id
+                // Organization type - create single user
                 $user = User::create([
                     'first_name' => $request->first_name,
                     'middle_name' => $request->middle_name,
                     'last_name' => $request->last_name,
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
-                    'role' => 'tree planter',
                     'contact_number' => $request->contact_number,
+                    'address' => $request->address,
+                ]);
+
+                // Create user-organization relationship
+                UserOrganization::create([
+                    'user_id' => $user->id,
                     'organization_id' => $request->organization_id,
+                    'role' => 'organization',
+                    'joined_at' => now(),
                 ]);
             }
 

@@ -12,9 +12,10 @@ return new class extends Migration
             $table->integer('id', false, true)->primary()->autoIncrement();
             $table->string('org_name', 50);
             $table->string('president_first_name', 50);
-            $table->string('president_middle_name', 50);
+            $table->string('president_middle_name', 50)->nullable();
             $table->string('president_last_name', 50);
-            $table->string('organization_code', 6);
+            $table->string('president_email', 50)->unique();
+            $table->string('organization_code', 6)->unique();
         });
     }
 

@@ -12,14 +12,14 @@ return new class extends Migration
             $table->integer('id', false, true)->primary()->autoIncrement();
             $table->integer('tree_id', false, true);
             $table->foreign('tree_id')->references('id')->on('trees')->onDelete('cascade');
-            $table->integer('staff_id', false, true);
-            $table->foreign('staff_id')->references('id')->on('users')->onDelete('cascade');
-            $table->char('assignment_id', 36);
-            $table->foreign('assignment_id')->references('id')->on('monitoring_assignments')->onDelete('cascade');
+            $table->char('assignment_id', 36)->nullable();
+            $table->foreign('assignment_id')->references('id')->on('monitoring_assignments')->onDelete('set null');
+            $table->integer('couple_user_id', false, true)->nullable();
+            $table->foreign('couple_user_id')->references('id')->on('users')->onDelete('set null');
+            $table->text('photo')->nullable();
             $table->enum('status', ['alive', 'dead']);
-            $table->text('photo');
-            $table->timestamp('checked_at');
-            $table->timestamp('synced_at');
+            $table->timestamp('checked_at')->nullable();
+            $table->timestamp('synced_at')->nullable();
         });
     }
 

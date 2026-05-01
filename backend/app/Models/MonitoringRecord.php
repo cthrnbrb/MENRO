@@ -14,10 +14,10 @@ class MonitoringRecord extends Model
 
     protected $fillable = [
         'tree_id',
-        'staff_id',
         'assignment_id',
-        'status',
+        'couple_user_id',
         'photo',
+        'status',
         'checked_at',
         'synced_at',
     ];
@@ -33,13 +33,13 @@ class MonitoringRecord extends Model
         return $this->belongsTo(Tree::class);
     }
 
-    public function staff()
-    {
-        return $this->belongsTo(User::class, 'staff_id');
-    }
-
     public function assignment()
     {
         return $this->belongsTo(MonitoringAssignment::class, 'assignment_id');
+    }
+
+    public function coupleUser()
+    {
+        return $this->belongsTo(User::class, 'couple_user_id');
     }
 }

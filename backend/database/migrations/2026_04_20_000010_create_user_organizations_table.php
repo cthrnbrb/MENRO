@@ -8,20 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('planting_activities', function (Blueprint $table) {
+        Schema::create('user_organizations', function (Blueprint $table) {
             $table->integer('id', false, true)->primary()->autoIncrement();
+            $table->integer('user_id', false, true);
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->integer('organization_id', false, true);
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
-            $table->string('location', 50);
-            $table->integer('expected_tree_count');
-            $table->string('tree_species', 25);
-            $table->date('scheduled_date');
-            $table->timestamp('created_at')->nullable();
+            $table->enum('role', ['admin', 'monitoring staff', 'organization', 'couple']);
+            $table->timestamp('joined_at')->nullable();
+            $table->unique(['user_id', 'organization_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('planting_activities');
+        Schema::dropIfExists('user_organizations');
     }
 };

@@ -15,15 +15,16 @@ class User extends Authenticatable
     protected $fillable = [
         'email',
         'password',
-        'role',
         'first_name',
         'middle_name',
         'last_name',
         'contact_number',
         'address',
-        'organization_id',
         'or_number',
         'photo',
+        'is_deleted',
+        'deleted_at',
+        'deleted_by',
     ];
 
     protected $hidden = [
@@ -32,7 +33,9 @@ class User extends Authenticatable
 
     protected $casts = [
         'password' => 'hashed',
-        'organization_id' => 'integer',
+        'is_deleted' => 'boolean',
+        'deleted_at' => 'datetime',
+        'deleted_by' => 'integer',
     ];
 
     public function getNameAttribute(): string
@@ -40,9 +43,9 @@ class User extends Authenticatable
         return $this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . $this->last_name;
     }
 
-    public function organization()
+    public function userOrganizations()
     {
-        return $this->belongsTo(Organization::class);
+        return $this->hasMany(UserOrganization::class);
     }
 
     public function couple()
@@ -60,9 +63,9 @@ class User extends Authenticatable
         return $this->hasMany(MonitoringAssignment::class, 'staff_id');
     }
 
-    public function monitoringRecordsAsStaff()
+    public function deletedBy()
     {
-        return $this->hasMany(MonitoringRecord::class, 'staff_id');
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
 }

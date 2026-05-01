@@ -17,6 +17,7 @@ class MonitoringAssignment extends Model
         'staff_id',
         'target_year',
         'target_quarter',
+        'scheduled_date',
         'is_completed',
     ];
 
@@ -24,6 +25,7 @@ class MonitoringAssignment extends Model
         'target_year' => 'integer',
         'target_quarter' => 'integer',
         'is_completed' => 'boolean',
+        'scheduled_date' => 'date',
     ];
 
     public $incrementing = false;

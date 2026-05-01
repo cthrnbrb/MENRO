@@ -8,7 +8,6 @@ use App\Http\Controllers\PlantingActivityController;
 use App\Http\Controllers\TreePlanterController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\MonitoringController;
-use App\Http\Controllers\MonitoringStaffController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ProfileController;
@@ -99,16 +98,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/sync', [MonitoringController::class, 'sync']);
     });
 
-    // Monitoring Staff Management (Admin)
-    Route::prefix('monitoring-staff')->group(function () {
-        Route::get('/', [MonitoringStaffController::class, 'index']);
-        Route::post('/', [MonitoringStaffController::class, 'store']);
-        Route::get('/statistics', [MonitoringStaffController::class, 'statistics']);
-        Route::get('/{id}', [MonitoringStaffController::class, 'show']);
-        Route::put('/{id}', [MonitoringStaffController::class, 'update']);
-        Route::delete('/{id}', [MonitoringStaffController::class, 'destroy']);
-    });
-
     // Attendance Records
     Route::prefix('attendance')->group(function () {
         Route::get('/', [AttendanceController::class, 'index']);
@@ -120,15 +109,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // =========================
-    // PHASE 4: Dashboard & Reporting (Admin)
+    // AUTHENTICATED ROUTES
     // =========================
-    Route::prefix('dashboard')->group(function () {
-        Route::get('/statistics', [DashboardController::class, 'statistics']);
-        Route::get('/gis-map', [DashboardController::class, 'gisMap']);
-        Route::get('/monitoring-history', [DashboardController::class, 'monitoringHistory']);
-        Route::get('/survival-analytics', [DashboardController::class, 'survivalAnalytics']);
-        Route::get('/species-list', [DashboardController::class, 'speciesList']);
-        Route::post('/generate-report', [DashboardController::class, 'generateReport']);
-        Route::get('/calendar-events', [DashboardController::class, 'calendarEvents']);
+    Route::get('/user/{id}/organizations', function ($id) {
+        return \App\Models\UserOrganization::where('user_id', $id)->get();
     });
+    Route::get('/calendar-events', [DashboardController::class, 'calendarEvents']);
 });

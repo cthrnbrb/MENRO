@@ -16,8 +16,11 @@ return new class extends Migration
             $table->foreign('staff_id')->references('id')->on('users')->onDelete('cascade');
             $table->integer('target_year');
             $table->integer('target_quarter');
+            $table->date('scheduled_date');
             $table->boolean('is_completed')->default(false);
             $table->timestamp('created_at')->nullable();
+            $table->timestamp('updated_at')->nullable();
+            $table->unique(['activity_id', 'staff_id', 'target_year', 'target_quarter'], 'monitoring_assignments_unique');
         });
     }
 

@@ -154,7 +154,7 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Create the user and link to organization
+        // Create the user
         $user = \App\Models\User::create([
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
@@ -163,8 +163,14 @@ class AuthController extends Controller
             'password' => bcrypt($request->password),
             'contact_number' => $request->contact_number,
             'address' => $request->address,
-            'role' => 'organization', // User becomes an organization member
+        ]);
+
+        // Create user-organization relationship
+        \App\Models\UserOrganization::create([
+            'user_id' => $user->id,
             'organization_id' => $organization->id,
+            'role' => 'organization',
+            'joined_at' => now(),
         ]);
 
         return response()->json([

@@ -11,6 +11,7 @@ class Tree extends Model
     use HasFactory;
 
     protected $fillable = [
+        'organization_id',
         'activity_id',
         'planter_id',
         'latitude',
@@ -26,6 +27,11 @@ class Tree extends Model
         'planted_at' => 'datetime',
         'synced_at' => 'datetime',
     ];
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class, 'organization_id');
+    }
 
     public function activity()
     {

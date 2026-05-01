@@ -107,7 +107,7 @@ class MonitoringController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'tree_id' => 'required|exists:trees,id',
-            'assignment_id' => 'required|exists:monitoring_assignments,id',
+            'assignment_id' => 'nullable|exists:monitoring_assignments,id',
             'status' => 'required|in:alive,dead',
             'photo' => 'required|string', // Base64 encoded, camera only
             'notes' => 'nullable|string',
@@ -121,25 +121,28 @@ class MonitoringController extends Controller
         }
 
         try {
-            // Verify staff has this assignment
-            $assignment = MonitoringAssignment::where('id', $request->assignment_id)
-                ->where('staff_id', auth()->id())
-                ->first();
+            // Verify assignment if provided
+            $assignment = null;
+            if ($request->assignment_id) {
+                $assignment = MonitoringAssignment::where('id', $request->assignment_id)
+                    ->where('staff_id', auth()->id())
+                    ->first();
 
-            if (!$assignment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You are not assigned to monitor this activity'
-                ], 403);
-            }
+                if (!$assignment) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not assigned to monitor this activity'
+                    ], 403);
+                }
 
-            // Verify tree belongs to this assignment's activity
-            $tree = Tree::findOrFail($request->tree_id);
-            if ($tree->activity_id !== $assignment->activity_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tree does not belong to this monitoring assignment'
-                ], 403);
+                // Verify tree belongs to this assignment's activity
+                $tree = Tree::findOrFail($request->tree_id);
+                if ($tree->activity_id !== $assignment->activity_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tree does not belong to this monitoring assignment'
+                    ], 403);
+                }
             }
 
             // Handle base64 photo upload (camera only)
@@ -150,14 +153,16 @@ class MonitoringController extends Controller
                 'tree_id' => $request->tree_id,
                 'staff_id' => auth()->id(),
                 'assignment_id' => $request->assignment_id,
-                'status' => $request->status,
                 'photo' => $photoPath,
+                'status' => $request->status,
                 'checked_at' => now(),
                 'synced_at' => now(),
             ]);
 
-            // Recalculate survival rate for this activity
-            $this->recalculateSurvivalRate($assignment->activity_id);
+            // Recalculate survival rate for this activity if assignment exists
+            if ($assignment) {
+                $this->recalculateSurvivalRate($assignment->activity_id);
+            }
 
             return response()->json([
                 'success' => true,
@@ -184,7 +189,7 @@ class MonitoringController extends Controller
         $validator = Validator::make($request->all(), [
             'records' => 'required|array',
             'records.*.tree_id' => 'required|exists:trees,id',
-            'records.*.assignment_id' => 'required|exists:monitoring_assignments,id',
+            'records.*.assignment_id' => 'nullable|exists:monitoring_assignments,id',
             'records.*.status' => 'required|in:alive,dead',
             'records.*.photo' => 'required|string',
             'records.*.local_id' => 'required|string',
@@ -204,13 +209,16 @@ class MonitoringController extends Controller
 
         foreach ($request->records as $recordData) {
             try {
-                // Verify assignment
-                $assignment = MonitoringAssignment::where('id', $recordData['assignment_id'])
-                    ->where('staff_id', auth()->id())
-                    ->first();
+                // Verify assignment if provided
+                $assignment = null;
+                if ($recordData['assignment_id']) {
+                    $assignment = MonitoringAssignment::where('id', $recordData['assignment_id'])
+                        ->where('staff_id', auth()->id())
+                        ->first();
 
-                if (!$assignment) {
-                    throw new \Exception('Unauthorized assignment');
+                    if (!$assignment) {
+                        throw new \Exception('Unauthorized assignment');
+                    }
                 }
 
                 $photoPath = $this->saveBase64Photo($recordData['photo']);
@@ -219,8 +227,8 @@ class MonitoringController extends Controller
                     'tree_id' => $recordData['tree_id'],
                     'staff_id' => auth()->id(),
                     'assignment_id' => $recordData['assignment_id'],
-                    'status' => $recordData['status'],
                     'photo' => $photoPath,
+                    'status' => $recordData['status'],
                     'checked_at' => $recordData['checked_at'] ?? now(),
                     'synced_at' => now(),
                 ]);
@@ -230,7 +238,9 @@ class MonitoringController extends Controller
                     'server_id' => $record->id,
                 ];
 
-                $affectedActivities[] = $assignment->activity_id;
+                if ($assignment) {
+                    $affectedActivities[] = $assignment->activity_id;
+                }
 
             } catch (\Exception $e) {
                 $errors[] = [
