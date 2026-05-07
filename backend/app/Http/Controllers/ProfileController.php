@@ -17,10 +17,11 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
         
-        // Load organization if user has one
+        // Load organization via userOrganizations
         $organization = null;
-        if ($user->organization_id) {
-            $organization = Organization::find($user->organization_id);
+        $userOrg = $user->userOrganizations()->first();
+        if ($userOrg) {
+            $organization = Organization::find($userOrg->organization_id);
         }
         
         // Calculate statistics

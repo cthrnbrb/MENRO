@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Tree;
 use App\Models\PlantingActivity;
-use App\Models\AttendanceRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -42,7 +41,7 @@ class TreeController extends Controller
             $query->where('planter_id', $request->planter_id);
         }
 
-        $trees = $query->orderBy('created_at', 'desc')->get();
+        $trees = $query->orderBy('id', 'desc')->get();
 
         return response()->json([
             'success' => true,
@@ -102,14 +101,16 @@ class TreeController extends Controller
             $activity = PlantingActivity::findOrFail($request->activity_id);
 
             // Check if current user is authorized (tree planter for this activity)
-            $isAuthorized = auth()->user()->role === 'tree planter' &&
+            $userRole = auth()->user()->role;
+
+            $isAuthorized = in_array($userRole, ['couple', 'organization']) &&
                 auth()->user()->treesAsPlanter()
                     ->where('activity_id', $activity->id)
                     ->exists();
 
             // Also allow if user is the assigned planter through participant_member
             // Or if admin
-            $isAdmin = auth()->user()->role === 'admin';
+            $isAdmin = $userRole === 'admin';
 
             if (!$isAuthorized && !$isAdmin) {
                 return response()->json([
@@ -217,18 +218,6 @@ class TreeController extends Controller
                     'synced_at' => now(),
                 ]);
 
-                // ✅ ATTENDANCE AUTO MARK (SYNC VERSION)
-                AttendanceRecord::updateOrCreate(
-                    [
-                        'activity_id' => $treeData['activity_id'],
-                        'user_id' => auth()->id(),
-                    ],
-                    [
-                        'tree_id' => $tree->id,
-                        'attendance' => 'present'
-                    ]
-                );
-
                 $syncedTrees[] = [
                     'local_id' => $treeData['local_id'],
                     'server_id' => $tree->id,
@@ -259,24 +248,20 @@ class TreeController extends Controller
     {
         $user = auth()->user();
 
-        // For couples, get trees from their organization's activities
-        if ($user->role === 'couple') {
-            if ($user->organization_id) {
-                $trees = Tree::with(['activity', 'monitoringRecords'])
-                    ->whereHas('activity', function ($query) use ($user) {
-                        $query->where('organization_id', $user->organization_id);
-                    })
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-            } else {
-                // Couple without organization - return empty
-                $trees = collect();
-            }
-        } else {
-            // For planters, get their own trees
+        // Get user's role from users table
+        $userRole = $user->role;
+
+        if ($userRole === 'couple') {
+            // Couples get their own trees as planter
             $trees = Tree::with(['activity', 'monitoringRecords'])
                 ->where('planter_id', $user->id)
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->get();
+        } else {
+            // For organization planters, get their own trees
+            $trees = Tree::with(['activity', 'monitoringRecords'])
+                ->where('planter_id', $user->id)
+                ->orderBy('id', 'desc')
                 ->get();
         }
 
@@ -294,7 +279,7 @@ class TreeController extends Controller
     {
         $trees = Tree::with(['planter', 'monitoringRecords'])
             ->where('activity_id', $activityId)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
 
         // Calculate survival stats

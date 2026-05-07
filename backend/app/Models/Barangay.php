@@ -9,11 +9,12 @@ class Barangay extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'name',
         'municipality',
         'province',
-        'boundary',
     ];
 
     public function zones()

@@ -11,10 +11,8 @@ return new class extends Migration
         Schema::create('organizations', function (Blueprint $table) {
             $table->integer('id', false, true)->primary()->autoIncrement();
             $table->string('org_name', 50);
-            $table->string('president_first_name', 50);
-            $table->string('president_middle_name', 50)->nullable();
-            $table->string('president_last_name', 50);
-            $table->string('president_email', 50)->unique();
+            $table->integer('president_id', false, true)->nullable();
+            $table->foreign('president_id')->references('id')->on('users')->onDelete('set null');
             $table->string('organization_code', 6)->unique();
         });
     }

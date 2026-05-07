@@ -10,8 +10,6 @@ return new class extends Migration
     {
         Schema::create('trees', function (Blueprint $table) {
             $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('organization_id', false, true);
-            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
             $table->integer('activity_id', false, true);
             $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
             $table->integer('planter_id', false, true);
@@ -21,6 +19,7 @@ return new class extends Migration
             $table->text('photo')->nullable();
             $table->timestamp('planted_at')->nullable();
             $table->timestamp('synced_at')->nullable();
+            $table->enum('status', ['alive', 'dead'])->default('alive');
         });
     }
 

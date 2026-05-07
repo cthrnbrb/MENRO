@@ -12,6 +12,7 @@ return new class extends Migration
             $table->integer('id', false, true)->primary()->autoIncrement();
             $table->string('email', 50)->unique();
             $table->string('password', 60);
+            $table->enum('role', ['admin', 'monitoring staff', 'president', 'organization', 'couple']);
 
             $table->string('first_name', 50);
             $table->string('middle_name', 50)->nullable();
@@ -19,7 +20,6 @@ return new class extends Migration
             $table->string('contact_number', 11);
             $table->text('address');
             $table->text('photo')->nullable();
-            $table->string('or_number', 50)->nullable();
 
             $table->boolean('is_deleted')->default(false);
             $table->timestamp('deleted_at')->nullable();

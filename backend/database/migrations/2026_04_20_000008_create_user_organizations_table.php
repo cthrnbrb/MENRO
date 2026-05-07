@@ -14,7 +14,11 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->integer('organization_id', false, true);
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
-            $table->enum('role', ['admin', 'monitoring staff', 'organization', 'couple']);
+            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
+            $table->timestamp('requested_at');
+            $table->timestamp('responded_at')->nullable();
+            $table->integer('responded_by', false, true)->nullable();
+            $table->foreign('responded_by')->references('id')->on('users')->onDelete('set null');
             $table->timestamp('joined_at')->nullable();
             $table->unique(['user_id', 'organization_id']);
         });

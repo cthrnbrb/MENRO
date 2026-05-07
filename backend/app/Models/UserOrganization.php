@@ -11,14 +11,21 @@ class UserOrganization extends Model
 
     protected $table = 'user_organizations';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'organization_id',
-        'role',
+        'status',
+        'requested_at',
+        'responded_at',
+        'responded_by',
         'joined_at',
     ];
 
     protected $casts = [
+        'requested_at' => 'datetime',
+        'responded_at' => 'datetime',
         'joined_at' => 'datetime',
     ];
 
@@ -30,5 +37,10 @@ class UserOrganization extends Model
     public function organization()
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function respondedBy()
+    {
+        return $this->belongsTo(User::class, 'responded_by');
     }
 }

@@ -300,7 +300,8 @@ class MonitoringController extends Controller
         }
 
         // Staff can only see their own records
-        if (auth()->user()->role === 'monitoring staff') {
+        $userRole = auth()->user()->role;
+        if ($userRole === 'monitoring staff') {
             $query->where('staff_id', auth()->id());
         }
 

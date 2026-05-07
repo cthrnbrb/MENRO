@@ -11,6 +11,8 @@ class MonitoringAssignmentLog extends Model
 
     protected $table = 'monitoring_assignment_logs';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'assignment_id',
         'previous_staff_id',

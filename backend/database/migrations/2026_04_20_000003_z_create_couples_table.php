@@ -8,21 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('attendance_records', function (Blueprint $table) {
+        Schema::create('couples', function (Blueprint $table) {
             $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('activity_id', false, true);
-            $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
             $table->integer('user_id', false, true);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->enum('attendance', ['present', 'absent']);
-            $table->integer('tree_id', false, true);
-            $table->foreign('tree_id')->references('id')->on('trees')->onDelete('cascade');
+            $table->integer('partner_user_id', false, true);
+            $table->foreign('partner_user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->string('or_number', 50);
             $table->timestamp('created_at')->nullable();
+
+            $table->unique(['user_id', 'partner_user_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('attendance_records');
+        Schema::dropIfExists('couples');
     }
 };

@@ -22,8 +22,8 @@ class OrganizationController extends Controller
      */
     public function index()
     {
-        $organizations = Organization::with(['plantingActivities'])
-            ->orderBy('created_at', 'desc')
+        $organizations = Organization::with(['plantingActivities', 'president'])
+            ->orderBy('id', 'desc')
             ->get();
 
         return response()->json([
@@ -58,12 +58,8 @@ class OrganizationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'org_name' => 'required|string|max:255',
-            'president_first_name' => 'required|string|max:100',
-            'president_middle_name' => 'nullable|string|max:100',
-            'president_last_name' => 'required|string|max:100',
-            'contact_number' => 'nullable|string|max:50',
-            'address' => 'nullable|string',
-            'organization_code' => 'required|string|max:50|unique:organizations',
+            'president_id' => 'nullable|exists:users,id',
+            'organization_code' => 'required|string|max:6|unique:organizations',
         ]);
 
         if ($validator->fails()) {
@@ -77,11 +73,7 @@ class OrganizationController extends Controller
             // Create organization only
             $organization = Organization::create([
                 'org_name' => $request->org_name,
-                'president_first_name' => $request->president_first_name,
-                'president_middle_name' => $request->president_middle_name,
-                'president_last_name' => $request->president_last_name,
-                'contact_number' => $request->contact_number,
-                'address' => $request->address,
+                'president_id' => $request->president_id,
                 'organization_code' => $request->organization_code,
             ]);
 
@@ -108,12 +100,8 @@ class OrganizationController extends Controller
 
         $validator = Validator::make($request->all(), [
             'org_name' => 'sometimes|required|string|max:255',
-            'president_first_name' => 'sometimes|required|string|max:100',
-            'president_middle_name' => 'nullable|string|max:100',
-            'president_last_name' => 'sometimes|required|string|max:100',
-            'contact_number' => 'nullable|string|max:50',
-            'address' => 'nullable|string',
-            'organization_code' => 'sometimes|required|string|max:50|unique:organizations,organization_code,' . $id,
+            'president_id' => 'nullable|exists:users,id',
+            'organization_code' => 'sometimes|required|string|max:6|unique:organizations,organization_code,' . $id,
         ]);
 
         if ($validator->fails()) {
@@ -125,11 +113,7 @@ class OrganizationController extends Controller
 
         $organization->update($request->only([
             'org_name',
-            'president_first_name',
-            'president_middle_name',
-            'president_last_name',
-            'contact_number',
-            'address',
+            'president_id',
             'organization_code'
         ]));
 
@@ -180,11 +164,27 @@ class OrganizationController extends Controller
     public function getUsers($id)
     {
         $organization = Organization::findOrFail($id);
-        
-        // Get all users linked to this organization
-        $users = User::where('organization_id', $id)
-            ->select('id', 'first_name', 'last_name', 'email', 'contact_number', 'role')
-            ->get();
+
+        // Get all users linked to this organization via user_organizations
+        $users = User::whereHas('userOrganizations', function ($q) use ($id) {
+                $q->where('organization_id', $id);
+            })
+            ->with(['userOrganizations' => function ($q) use ($id) {
+                $q->where('organization_id', $id);
+            }])
+            ->get()
+            ->map(function ($user) {
+                $userOrg = $user->userOrganizations->first();
+                return [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'contact_number' => $user->contact_number,
+                    'role' => $user->role,
+                    'membership_status' => $userOrg?->status ?? null,
+                ];
+            });
 
         return response()->json([
             'success' => true,

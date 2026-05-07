@@ -10,20 +10,19 @@ class Certificate extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'couple_id',
         'organization_id',
-        'certificate_number',
-        'file_url',
         'issued_at',
     ];
 
     protected $casts = [
         'issued_at' => 'datetime',
+        'created_at' => 'datetime',
     ];
 
-    public function user()
+    public function couple()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Couple::class);
     }
 
     public function organization()

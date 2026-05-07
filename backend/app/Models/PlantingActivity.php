@@ -21,6 +21,10 @@ class PlantingActivity extends Model
         'center_lng',
         'radius_meters',
         'scheduled_date',
+        'scheduled_time',
+        'recorded_by',
+        'recorded_at',
+        'letter_reference',
         'status',
         'is_deleted',
         'deleted_at',
@@ -33,6 +37,7 @@ class PlantingActivity extends Model
         'center_lng' => 'decimal:7',
         'is_deleted' => 'boolean',
         'deleted_at' => 'datetime',
+        'recorded_at' => 'datetime',
     ];
 
     public function organization()
@@ -55,13 +60,23 @@ class PlantingActivity extends Model
         return $this->hasMany(MonitoringAssignment::class, 'activity_id');
     }
 
-    public function attendanceRecords()
+    public function activityScheduleLogs()
     {
-        return $this->hasMany(AttendanceRecord::class, 'activity_id');
+        return $this->hasMany(ActivityScheduleLog::class, 'activity_id');
+    }
+
+    public function activityLocationLogs()
+    {
+        return $this->hasMany(ActivityLocationLog::class, 'activity_id');
     }
 
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    public function recordedBy()
+    {
+        return $this->belongsTo(User::class, 'recorded_by');
     }
 }

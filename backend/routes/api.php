@@ -3,13 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OrganizationController;
-use App\Http\Controllers\CoupleController;
 use App\Http\Controllers\PlantingActivityController;
 use App\Http\Controllers\TreePlanterController;
 use App\Http\Controllers\TreeController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ProfileController;
 
 // API Routes for authentication (no CSRF required)
@@ -24,6 +22,7 @@ Route::get('/organizations/by-code/{code}', [OrganizationController::class, 'get
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/join-organization', [AuthController::class, 'joinOrganization']);
     
     // User Profile
     Route::prefix('user')->group(function () {
@@ -43,16 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [OrganizationController::class, 'update']);
         Route::delete('/{id}', [OrganizationController::class, 'destroy']);
         Route::get('/{id}/users', [OrganizationController::class, 'getUsers']);
-    });
-
-    // Couples Management (Admin)
-    Route::prefix('couples')->group(function () {
-        Route::get('/', [CoupleController::class, 'index']);
-        Route::post('/', [CoupleController::class, 'store']);
-        Route::get('/{id}', [CoupleController::class, 'show']);
-        Route::put('/{id}', [CoupleController::class, 'update']);
-        Route::delete('/{id}', [CoupleController::class, 'destroy']);
-        Route::get('/{id}/users', [CoupleController::class, 'getUsers']);
     });
 
     // Tree Planters Management (Admin)
@@ -96,16 +85,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [MonitoringController::class, 'store']);
         Route::get('/history', [MonitoringController::class, 'history']);
         Route::post('/sync', [MonitoringController::class, 'sync']);
-    });
-
-    // Attendance Records
-    Route::prefix('attendance')->group(function () {
-        Route::get('/', [AttendanceController::class, 'index']);
-        Route::post('/', [AttendanceController::class, 'store']);
-        Route::get('/summary', [AttendanceController::class, 'summary']);
-        Route::get('/{id}', [AttendanceController::class, 'show']);
-        Route::put('/{id}', [AttendanceController::class, 'update']);
-        Route::delete('/{id}', [AttendanceController::class, 'destroy']);
     });
 
     // =========================

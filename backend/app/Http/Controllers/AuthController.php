@@ -22,12 +22,17 @@ class AuthController extends Controller
         if (Auth::attempt($request->only('email', 'password'))) {
             $user = Auth::user();
             $token = $user->createToken('auth-token')->plainTextToken;
-            
+
+            // Load user's organizations with organization details
+            $userOrganizations = $user->userOrganizations()->with('organization')->get();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
                 'token' => $token,
                 'user' => $user,
+                'organizations' => $userOrganizations,
+                'role' => $user->role,
             ]);
         }
 
@@ -105,7 +110,7 @@ class AuthController extends Controller
     public function validateCode(Request $request)
     {
         $request->validate([
-            'code' => 'required|string|max:50',
+            'code' => 'required|string|max:6',
         ]);
 
         $code = trim($request->code);
@@ -131,30 +136,84 @@ class AuthController extends Controller
         ], 404);
     }
 
+    public function joinOrganization(Request $request)
+    {
+        try {
+            $request->validate([
+                'code' => 'required|string|max:6',
+            ]);
+
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $code = trim($request->code);
+
+            // Check if organization exists
+            $organization = \App\Models\Organization::where('organization_code', $code)->first();
+
+            if (!$organization) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid organization code'
+                ], 404);
+            }
+
+            // Check if user already has a pending/accepted membership request
+            $existingMembership = \App\Models\UserOrganization::where('user_id', $user->id)
+                ->where('organization_id', $organization->id)
+                ->first();
+
+            if ($existingMembership) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You already have a membership request for this organization',
+                    'status' => $existingMembership->status
+                ], 400);
+            }
+
+            // Create join request with pending status
+            \App\Models\UserOrganization::create([
+                'user_id' => $user->id,
+                'organization_id' => $organization->id,
+                'status' => 'pending',
+                'requested_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Join request submitted. Waiting for president approval.',
+                'data' => [
+                    'organization' => $organization,
+                    'role' => $user->role,
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit join request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function register(Request $request)
     {
         $request->validate([
             'first_name' => 'required|string|max:50',
-            'middle_name' => 'required|string|max:50',
+            'middle_name' => 'nullable|string|max:50',
             'last_name' => 'required|string|max:50',
             'email' => 'required|string|email|max:50|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'contact_number' => 'required|string|max:11',
             'address' => 'required|string',
-            'code' => 'required|string|max:6|exists:organizations,organization_code'
         ]);
 
-        // Find the existing organization by code
-        $organization = \App\Models\Organization::where('organization_code', trim($request->code))->first();
-        
-        if (!$organization) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid organization code'
-            ], 400);
-        }
-
-        // Create the user
+        // Create the user only (no organization yet)
+        // Default role is 'organization' for self-registration
         $user = \App\Models\User::create([
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
@@ -163,22 +222,14 @@ class AuthController extends Controller
             'password' => bcrypt($request->password),
             'contact_number' => $request->contact_number,
             'address' => $request->address,
-        ]);
-
-        // Create user-organization relationship
-        \App\Models\UserOrganization::create([
-            'user_id' => $user->id,
-            'organization_id' => $organization->id,
             'role' => 'organization',
-            'joined_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Registration successful',
+            'message' => 'Registration successful. Please login to join an organization.',
             'data' => [
                 'user' => $user,
-                'organization' => $organization
             ]
         ], 201);
     }

@@ -15,6 +15,8 @@ class MonitoringAssignment extends Model
     protected $fillable = [
         'activity_id',
         'staff_id',
+        'assigned_by',
+        'assigned_at',
         'target_year',
         'target_quarter',
         'scheduled_date',
@@ -26,6 +28,7 @@ class MonitoringAssignment extends Model
         'target_quarter' => 'integer',
         'is_completed' => 'boolean',
         'scheduled_date' => 'date',
+        'assigned_at' => 'datetime',
     ];
 
     public $incrementing = false;
@@ -39,6 +42,11 @@ class MonitoringAssignment extends Model
     public function staff()
     {
         return $this->belongsTo(User::class, 'staff_id');
+    }
+
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 
     public function monitoringRecords()

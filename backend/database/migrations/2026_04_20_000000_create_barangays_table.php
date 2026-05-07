@@ -10,12 +10,9 @@ return new class extends Migration
     {
         Schema::create('barangays', function (Blueprint $table) {
             $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->string('name', 50);
-            $table->string('municipality', 50);
-            $table->string('province', 50);
-            $table->geometry('boundary')->nullable();
-            $table->timestamp('created_at')->nullable();
-            $table->timestamp('updated_at')->nullable();
+            $table->string('name', 100);
+            $table->string('municipality', 100);
+            $table->string('province', 100);
         });
     }
 

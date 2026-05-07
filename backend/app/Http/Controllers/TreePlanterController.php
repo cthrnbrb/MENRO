@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Couple;
 use App\Models\Organization;
+use App\Models\UserOrganization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
@@ -16,9 +16,9 @@ class TreePlanterController extends Controller
      */
     public function index()
     {
-        $treePlanters = User::where('role', 'tree planter')
-            ->with(['organization', 'couple'])
-            ->orderBy('created_at', 'desc')
+        $treePlanters = User::whereIn('role', ['couple', 'organization'])
+            ->with(['userOrganizations.organization', 'coupleAsUser', 'coupleAsPartner'])
+            ->orderBy('id', 'desc')
             ->get()
             ->map(function ($user) {
                 $data = [
@@ -28,35 +28,33 @@ class TreePlanterController extends Controller
                     'last_name' => $user->last_name,
                     'email' => $user->email,
                     'contact_number' => $user->contact_number,
+                    'address' => $user->address,
+                    'role' => $user->role,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
                 ];
 
-                // Determine type based on organization_id or couple_id
-                if ($user->organization_id) {
-                    $data['type'] = 'organization';
-                    $data['organization_id'] = $user->organization_id;
-                    $data['organization'] = $user->organization;
-                    $data['address'] = $user->organization?->address;
-                } elseif ($user->couple_id) {
-                    $data['type'] = 'couple';
-                    $data['couple_id'] = $user->couple_id;
-                    $data['couple'] = $user->couple;
-                    $data['or_number'] = $user->couple?->or_number;
-                    $data['address'] = $user->couple?->address;
-                    
-                    // Find and include person 2 data (other user with same couple_id)
-                    $user2 = User::where('couple_id', $user->couple_id)
-                        ->where('id', '!=', $user->id)
-                        ->first();
-                    
-                    if ($user2) {
-                        $data['person2'] = [
-                            'id' => $user2->id,
-                            'first_name' => $user2->first_name,
-                            'last_name' => $user2->last_name,
-                            'email' => $user2->email,
-                        ];
+                $userOrg = $user->userOrganizations->first();
+                if ($userOrg) {
+                    $data['organization_id'] = $userOrg->organization_id;
+                    $data['organization'] = $userOrg->organization;
+                    $data['membership_status'] = $userOrg->status;
+                }
+
+                if ($user->role === 'couple') {
+                    $couple = $user->coupleAsUser ?? $user->coupleAsPartner;
+                    if ($couple) {
+                        $data['or_number'] = $couple->or_number;
+                        $partnerId = $couple->user_id === $user->id ? $couple->partner_user_id : $couple->user_id;
+                        $partner = User::find($partnerId);
+                        if ($partner) {
+                            $data['partner'] = [
+                                'id' => $partner->id,
+                                'first_name' => $partner->first_name,
+                                'last_name' => $partner->last_name,
+                                'email' => $partner->email,
+                            ];
+                        }
                     }
                 }
 
@@ -74,8 +72,8 @@ class TreePlanterController extends Controller
      */
     public function show($id)
     {
-        $user = User::where('role', 'tree planter')
-            ->with(['organization', 'couple'])
+        $user = User::whereIn('role', ['couple', 'organization'])
+            ->with(['userOrganizations.organization', 'coupleAsUser', 'coupleAsPartner'])
             ->findOrFail($id);
 
         $data = [
@@ -84,19 +82,34 @@ class TreePlanterController extends Controller
             'last_name' => $user->last_name,
             'email' => $user->email,
             'contact_number' => $user->contact_number,
+            'address' => $user->address,
+            'role' => $user->role,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
         ];
 
-        if ($user->organization_id) {
-            $data['type'] = 'organization';
-            $data['organization_id'] = $user->organization_id;
-            $data['organization'] = $user->organization;
-        } elseif ($user->couple_id) {
-            $data['type'] = 'couple';
-            $data['couple_id'] = $user->couple_id;
-            $data['couple'] = $user->couple;
-            $data['or_number'] = $user->couple?->or_number;
+        $userOrg = $user->userOrganizations->first();
+        if ($userOrg) {
+            $data['organization_id'] = $userOrg->organization_id;
+            $data['organization'] = $userOrg->organization;
+            $data['membership_status'] = $userOrg->status;
+        }
+
+        if ($user->role === 'couple') {
+            $couple = $user->coupleAsUser ?? $user->coupleAsPartner;
+            if ($couple) {
+                $data['or_number'] = $couple->or_number;
+                $partnerId = $couple->user_id === $user->id ? $couple->partner_user_id : $couple->user_id;
+                $partner = User::find($partnerId);
+                if ($partner) {
+                    $data['partner'] = [
+                        'id' => $partner->id,
+                        'first_name' => $partner->first_name,
+                        'last_name' => $partner->last_name,
+                        'email' => $partner->email,
+                    ];
+                }
+            }
         }
 
         return response()->json([
@@ -110,28 +123,28 @@ class TreePlanterController extends Controller
      */
     public function store(Request $request)
     {
-        $isCouple = $request->type === 'couple';
+        $isCouple = $request->role === 'couple';
         
         $rules = [
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
-            'contact_number' => 'required|string|max:50',
-            'address' => 'nullable|string',
-            'type' => 'required|in:couple,organization',
-            'organization_id' => 'required_if:type,organization|exists:organizations,id',
+            'contact_number' => 'required|string|max:11',
+            'address' => 'required|string',
+            'role' => 'required|in:couple,organization',
         ];
         
         // Add couple-specific rules
         if ($isCouple) {
-            $rules['or_number'] = 'required|string|max:255';
-            $rules['middle_name'] = 'nullable|string|max:100';
-            $rules['person2_first_name'] = 'required|string|max:100';
-            $rules['person2_middle_name'] = 'nullable|string|max:100';
-            $rules['person2_last_name'] = 'required|string|max:100';
-            $rules['person2_email'] = 'required|email|unique:users,email';
-            $rules['person2_password'] = 'required|string|min:6';
+            $rules['or_number'] = 'required|string|max:50';
+            $rules['middle_name'] = 'nullable|string|max:50';
+            $rules['partner_first_name'] = 'required|string|max:100';
+            $rules['partner_middle_name'] = 'nullable|string|max:50';
+            $rules['partner_last_name'] = 'required|string|max:100';
+            $rules['partner_email'] = 'required|email|unique:users,email';
+            $rules['partner_password'] = 'required|string|min:6';
+            $rules['partner_contact_number'] = 'required|string|max:11';
         }
         
         $validator = Validator::make($request->all(), $rules);
@@ -144,40 +157,23 @@ class TreePlanterController extends Controller
         }
         
         // Check if OR number is already in use by another couple
-        if ($isCouple) {
-            $existingCouple = Couple::where('or_number', $request->or_number)->first();
+        if ($isCouple && $request->has('or_number')) {
+            $existingCouple = \App\Models\Couple::where('or_number', $request->or_number)->first();
             if ($existingCouple) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This OR number is already registered to another couple',
-                    'errors' => ['or_number' => 'This OR number is already registered to another couple']
-                ], 422);
-            }
-            
-            // Validate that OR number is provided
-            if (empty($request->or_number)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'OR Number is required for couple registration',
-                    'errors' => ['or_number' => 'OR Number is required for couple registration']
+                    'message' => 'This OR number is already registered',
+                    'errors' => ['or_number' => 'This OR number is already registered']
                 ], 422);
             }
         }
 
         try {
-            $couple = null;
             $user2 = null;
 
-            // Handle based on type
-            if ($request->type === 'couple') {
-                // Create couple record first (address stored here for shared address)
-                $couple = Couple::create([
-                    'or_number' => $request->or_number,
-                    'contact_number' => $request->contact_number,
-                    'address' => $request->address,
-                ]);
-                
-                // Create first tree planter user
+            // Handle based on role
+            if ($request->role === 'couple') {
+                // Create first user
                 $user = User::create([
                     'first_name' => $request->first_name,
                     'middle_name' => $request->middle_name,
@@ -186,33 +182,27 @@ class TreePlanterController extends Controller
                     'password' => Hash::make($request->password),
                     'contact_number' => $request->contact_number,
                     'address' => $request->address,
-                ]);
-
-                // Create user-organization relationship for first user
-                UserOrganization::create([
-                    'user_id' => $user->id,
-                    'organization_id' => $request->organization_id,
                     'role' => 'couple',
-                    'joined_at' => now(),
                 ]);
 
-                // Create second tree planter user for couple
+                // Create second user for couple
                 $user2 = User::create([
-                    'first_name' => $request->person2_first_name,
-                    'middle_name' => $request->person2_middle_name,
-                    'last_name' => $request->person2_last_name,
-                    'email' => $request->person2_email,
-                    'password' => Hash::make($request->person2_password),
-                    'contact_number' => $request->contact_number,
+                    'first_name' => $request->partner_first_name,
+                    'middle_name' => $request->partner_middle_name,
+                    'last_name' => $request->partner_last_name,
+                    'email' => $request->partner_email,
+                    'password' => Hash::make($request->partner_password),
+                    'contact_number' => $request->partner_contact_number,
                     'address' => $request->address,
+                    'role' => 'couple',
                 ]);
 
-                // Create user-organization relationship for second user
-                UserOrganization::create([
-                    'user_id' => $user2->id,
-                    'organization_id' => $request->organization_id,
-                    'role' => 'couple',
-                    'joined_at' => now(),
+                // Create couple relationship
+                \App\Models\Couple::create([
+                    'user_id' => $user->id,
+                    'partner_user_id' => $user2->id,
+                    'or_number' => $request->or_number,
+                    'created_at' => now(),
                 ]);
             } else {
                 // Organization type - create single user
@@ -224,14 +214,7 @@ class TreePlanterController extends Controller
                     'password' => Hash::make($request->password),
                     'contact_number' => $request->contact_number,
                     'address' => $request->address,
-                ]);
-
-                // Create user-organization relationship
-                UserOrganization::create([
-                    'user_id' => $user->id,
-                    'organization_id' => $request->organization_id,
                     'role' => 'organization',
-                    'joined_at' => now(),
                 ]);
             }
 
@@ -242,39 +225,24 @@ class TreePlanterController extends Controller
                 'last_name' => $user->last_name,
                 'email' => $user->email,
                 'contact_number' => $user->contact_number,
-                'type' => $request->type,
-                'couple' => $couple,
+                'address' => $user->address,
+                'role' => $user->role,
             ];
             
-            // Set address based on type
-            if ($request->type === 'couple') {
-                $responseData['address'] = $couple?->address; // From couple table (shared)
-            } else {
-                // For organization type, get address from organization
-                $organization = Organization::find($request->organization_id);
-                $responseData['address'] = $organization?->address; // From organization table
-            }
-            
-            // Include organization data for organization type
-            if ($request->type === 'organization') {
-                $responseData['organization_id'] = $request->organization_id;
-                $organization = Organization::find($request->organization_id);
-                $responseData['organization'] = $organization;
-            }
-            
-            // Include second person data for couples
+            // Include partner data for couples
             if ($user2) {
-                $responseData['person2'] = [
+                $responseData['partner'] = [
                     'id' => $user2->id,
                     'first_name' => $user2->first_name,
                     'last_name' => $user2->last_name,
                     'email' => $user2->email,
                 ];
+                $responseData['or_number'] = $request->or_number;
             }
 
             return response()->json([
                 'success' => true,
-                'message' => $user2 ? 'Couple tree planters created successfully' : 'Tree planter created successfully',
+                'message' => $user2 ? 'Couple created successfully' : 'Tree planter created successfully',
                 'data' => $responseData
             ], 201);
 
@@ -291,28 +259,29 @@ class TreePlanterController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::where('role', 'tree planter')->findOrFail($id);
-        
-        // Check if this is a couple type
-        $isCouple = $user->couple_id;
+        $user = User::whereIn('role', ['couple', 'organization'])
+            ->with(['userOrganizations', 'coupleAsUser', 'coupleAsPartner'])
+            ->findOrFail($id);
+
+        $isCouple = $user->role === 'couple';
 
         $rules = [
             'first_name' => 'sometimes|required|string|max:100',
             'last_name' => 'sometimes|required|string|max:100',
             'email' => 'sometimes|required|email|unique:users,email,' . $id,
-            'contact_number' => 'sometimes|required|string|max:50',
-            'organization_id' => 'sometimes|required|exists:organizations,id',
-            'couple_id' => 'sometimes|required|exists:couples,id',
+            'contact_number' => 'sometimes|required|string|max:11',
+            'address' => 'sometimes|required|string',
         ];
         
         // Add couple-specific rules
         if ($isCouple) {
-            $rules['or_number'] = 'sometimes|required|string|max:255';
-            $rules['middle_name'] = 'nullable|string|max:100';
-            $rules['person2_middle_name'] = 'nullable|string|max:100';
-            $rules['person2_first_name'] = 'sometimes|required|string|max:100';
-            $rules['person2_last_name'] = 'sometimes|required|string|max:100';
-            $rules['person2_email'] = 'sometimes|required|email';
+            $rules['or_number'] = 'sometimes|required|string|max:50';
+            $rules['middle_name'] = 'nullable|string|max:50';
+            $rules['partner_first_name'] = 'sometimes|required|string|max:100';
+            $rules['partner_middle_name'] = 'nullable|string|max:50';
+            $rules['partner_last_name'] = 'sometimes|required|string|max:100';
+            $rules['partner_email'] = 'sometimes|required|email';
+            $rules['partner_contact_number'] = 'sometimes|required|string|max:11';
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -326,13 +295,13 @@ class TreePlanterController extends Controller
         
         // Check if OR number is already in use by another couple (excluding current couple)
         if ($isCouple && $request->has('or_number')) {
-            $existingCouple = Couple::where('or_number', $request->or_number)
-                ->where('id', '!=', $user->couple_id)
+            $existingCouple = \App\Models\Couple::where('or_number', $request->or_number)
+                ->where('id', '!=', ($user->coupleAsUser?->id ?? $user->coupleAsPartner?->id))
                 ->first();
             if ($existingCouple) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['or_number' => 'This OR number is already registered to another couple']
+                    'errors' => ['or_number' => 'This OR number is already registered']
                 ], 422);
             }
         }
@@ -344,35 +313,39 @@ class TreePlanterController extends Controller
             if ($request->has('last_name')) $updateData['last_name'] = $request->last_name;
             if ($request->has('email')) $updateData['email'] = $request->email;
             if ($request->has('contact_number')) $updateData['contact_number'] = $request->contact_number;
-            if ($request->has('organization_id')) $updateData['organization_id'] = $request->organization_id;
-            if ($request->has('couple_id')) $updateData['couple_id'] = $request->couple_id;
+            if ($request->has('address')) $updateData['address'] = $request->address;
+            if ($request->has('middle_name')) $updateData['middle_name'] = $request->middle_name;
 
             if (!empty($updateData)) {
                 $user->update($updateData);
             }
 
-            // Update couple OR number
+            // Update couple OR number if provided
             if ($isCouple && $request->has('or_number')) {
-                Couple::where('id', $user->couple_id)->update([
-                    'or_number' => $request->or_number,
-                ]);
+                $couple = $user->coupleAsUser ?? $user->coupleAsPartner;
+                if ($couple) {
+                    $couple->update(['or_number' => $request->or_number]);
+                }
             }
-            
-            // Update person 2 details if this is a couple
-            if ($isCouple && ($request->has('person2_first_name') || $request->has('person2_last_name') || $request->has('person2_email'))) {
-                // Find the other person in the couple
-                $user2 = User::where('couple_id', $user->couple_id)
-                    ->where('id', '!=', $user->id)
-                    ->first();
-                
-                if ($user2) {
-                    $user2UpdateData = [];
-                    if ($request->has('person2_first_name')) $user2UpdateData['first_name'] = $request->person2_first_name;
-                    if ($request->has('person2_last_name')) $user2UpdateData['last_name'] = $request->person2_last_name;
-                    if ($request->has('person2_email')) $user2UpdateData['email'] = $request->person2_email;
+
+            // Update partner details if this is a couple
+            if ($isCouple && ($request->has('partner_first_name') || $request->has('partner_last_name') || $request->has('partner_email') || $request->has('partner_contact_number'))) {
+                $couple = $user->coupleAsUser ?? $user->coupleAsPartner;
+                if ($couple) {
+                    $partnerId = $couple->user_id === $user->id ? $couple->partner_user_id : $couple->user_id;
+                    $partner = User::find($partnerId);
                     
-                    if (!empty($user2UpdateData)) {
-                        $user2->update($user2UpdateData);
+                    if ($partner) {
+                        $partnerUpdateData = [];
+                        if ($request->has('partner_first_name')) $partnerUpdateData['first_name'] = $request->partner_first_name;
+                        if ($request->has('partner_last_name')) $partnerUpdateData['last_name'] = $request->partner_last_name;
+                        if ($request->has('partner_email')) $partnerUpdateData['email'] = $request->partner_email;
+                        if ($request->has('partner_contact_number')) $partnerUpdateData['contact_number'] = $request->partner_contact_number;
+                        if ($request->has('partner_middle_name')) $partnerUpdateData['middle_name'] = $request->partner_middle_name;
+
+                        if (!empty($partnerUpdateData)) {
+                            $partner->update($partnerUpdateData);
+                        }
                     }
                 }
             }
@@ -380,7 +353,7 @@ class TreePlanterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tree planter updated successfully',
-                'data' => $user
+                'data' => $user->load(['coupleAsUser', 'coupleAsPartner'])
             ]);
 
         } catch (\Exception $e) {
@@ -396,21 +369,21 @@ class TreePlanterController extends Controller
      */
     public function destroy($id)
     {
-        $user = User::where('role', 'tree planter')->findOrFail($id);
+        $user = User::whereIn('role', ['couple', 'organization'])
+            ->with(['coupleAsUser', 'coupleAsPartner'])
+            ->findOrFail($id);
 
         try {
-            // If this is a couple user, check if we need to delete the couple
-            if ($user->couple_id) {
-                // Check if there are other users with this couple_id
-                $otherUsersCount = User::where('couple_id', $user->couple_id)
-                    ->where('id', '!=', $user->id)
-                    ->count();
-                
-                // If no other users, delete the couple
-                if ($otherUsersCount === 0) {
-                    Couple::where('id', $user->couple_id)->delete();
+            // If this is a couple user, delete the couple relationship
+            if ($user->role === 'couple') {
+                $couple = $user->coupleAsUser ?? $user->coupleAsPartner;
+                if ($couple) {
+                    $couple->delete();
                 }
             }
+
+            // Delete user organizations
+            $user->userOrganizations()->delete();
 
             // Delete user
             $user->delete();

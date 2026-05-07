@@ -14,8 +14,11 @@ return new class extends Migration
             $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
             $table->integer('staff_id', false, true);
             $table->foreign('staff_id')->references('id')->on('users')->onDelete('cascade');
-            $table->integer('target_year');
-            $table->integer('target_quarter');
+            $table->integer('assigned_by', false, true);
+            $table->foreign('assigned_by')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamp('assigned_at');
+            $table->integer('target_year')->nullable();
+            $table->integer('target_quarter')->nullable();
             $table->date('scheduled_date');
             $table->boolean('is_completed')->default(false);
             $table->timestamp('created_at')->nullable();

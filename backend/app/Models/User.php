@@ -15,12 +15,12 @@ class User extends Authenticatable
     protected $fillable = [
         'email',
         'password',
+        'role',
         'first_name',
         'middle_name',
         'last_name',
         'contact_number',
         'address',
-        'or_number',
         'photo',
         'is_deleted',
         'deleted_at',
@@ -48,9 +48,14 @@ class User extends Authenticatable
         return $this->hasMany(UserOrganization::class);
     }
 
-    public function couple()
+    public function coupleAsUser()
     {
-        return $this->hasOne(Couple::class);
+        return $this->hasOne(Couple::class, 'user_id');
+    }
+
+    public function coupleAsPartner()
+    {
+        return $this->hasOne(Couple::class, 'partner_user_id');
     }
 
     public function treesAsPlanter()

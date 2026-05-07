@@ -9,6 +9,8 @@ class Zone extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'barangay_id',
         'name',

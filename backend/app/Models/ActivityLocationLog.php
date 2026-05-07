@@ -11,6 +11,8 @@ class ActivityLocationLog extends Model
 
     protected $table = 'activity_location_logs';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'activity_id',
         'old_barangay_id',

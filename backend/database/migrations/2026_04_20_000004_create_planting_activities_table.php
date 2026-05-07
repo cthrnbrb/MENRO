@@ -20,7 +20,12 @@ return new class extends Migration
             $table->decimal('center_lng', 10, 7)->nullable();
             $table->integer('radius_meters')->nullable();
             $table->date('scheduled_date');
-            $table->enum('status', ['scheduled', 'completed', 'cancelled'])->default('scheduled');
+            $table->time('scheduled_time');
+            $table->integer('recorded_by', false, true)->nullable();
+            $table->foreign('recorded_by')->references('id')->on('users')->onDelete('set null');
+            $table->timestamp('recorded_at')->nullable();
+            $table->string('letter_reference', 100)->nullable();
+            $table->enum('status', ['pending', 'approved', 'completed', 'cancelled'])->default('pending');
             $table->boolean('is_deleted')->default(false);
             $table->timestamp('deleted_at')->nullable();
             $table->integer('deleted_by', false, true)->nullable();

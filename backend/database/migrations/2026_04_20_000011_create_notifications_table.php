@@ -21,9 +21,12 @@ return new class extends Migration
                 'monitoring_schedule',
                 'monitoring_reassigned',
                 'tree_update_reminder',
-                'certificate_ready'
+                'certificate_ready',
+                'join_request',
+                'join_accepted',
+                'join_rejected'
             ]);
-            $table->enum('role_target', ['admin', 'staff', 'couple']);
+            $table->enum('role_target', ['admin', 'staff', 'president', 'couple', 'organization']);
             $table->boolean('is_read')->default(false);
             $table->integer('related_id')->nullable();
             $table->timestamp('created_at')->nullable();
