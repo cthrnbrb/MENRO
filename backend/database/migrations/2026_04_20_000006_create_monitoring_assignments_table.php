@@ -10,12 +10,9 @@ return new class extends Migration
     {
         Schema::create('monitoring_assignments', function (Blueprint $table) {
             $table->char('id', 36)->primary();
-            $table->integer('activity_id', false, true);
-            $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
-            $table->integer('staff_id', false, true);
-            $table->foreign('staff_id')->references('id')->on('users')->onDelete('cascade');
-            $table->integer('assigned_by', false, true);
-            $table->foreign('assigned_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('activity_id')->constrained('planting_activities')->onDelete('cascade');
+            $table->foreignId('staff_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('assigned_by')->constrained('users')->onDelete('cascade');
             $table->timestamp('assigned_at');
             $table->integer('target_year')->nullable();
             $table->integer('target_quarter')->nullable();

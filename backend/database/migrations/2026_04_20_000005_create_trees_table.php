@@ -9,13 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('trees', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('activity_id', false, true);
-            $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
-            $table->integer('planter_id', false, true);
-            $table->foreign('planter_id')->references('id')->on('users')->onDelete('cascade');
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
+            $table->id();
+            $table->foreignId('activity_id')->constrained('planting_activities')->onDelete('cascade');
+            $table->foreignId('planter_id')->constrained('users')->onDelete('cascade');
+            $table->double('latitude')->nullable();
+            $table->double('longitude')->nullable();
             $table->text('photo')->nullable();
             $table->timestamp('planted_at')->nullable();
             $table->timestamp('synced_at')->nullable();

@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
+            $table->id();
             $table->string('email', 50)->unique();
             $table->string('password', 60);
-            $table->enum('role', ['admin', 'monitoring staff', 'president', 'organization', 'couple']);
+            $table->enum('role', ['admin', 'monitoring staff', 'organization', 'couple']);
 
             $table->string('first_name', 50);
             $table->string('middle_name', 50)->nullable();
@@ -23,11 +23,9 @@ return new class extends Migration
 
             $table->boolean('is_deleted')->default(false);
             $table->timestamp('deleted_at')->nullable();
-            $table->integer('deleted_by', false, true)->nullable();
-            $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreignId('deleted_by')->nullable()->constrained('users')->onDelete('set null');
 
-            $table->timestamp('created_at')->nullable();
-            $table->timestamp('updated_at')->nullable();
+            $table->timestamps();
         });
     }
 

@@ -9,16 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('monitoring_assignment_logs', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
+            $table->id();
             $table->char('assignment_id', 36);
             $table->foreign('assignment_id')->references('id')->on('monitoring_assignments')->onDelete('cascade');
-            $table->integer('previous_staff_id', false, true)->nullable();
-            $table->foreign('previous_staff_id')->references('id')->on('users')->onDelete('set null');
-            $table->integer('new_staff_id', false, true)->nullable();
-            $table->foreign('new_staff_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreignId('previous_staff_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('new_staff_id')->nullable()->constrained('users')->onDelete('set null');
             $table->text('remarks')->nullable();
-            $table->integer('transferred_by', false, true);
-            $table->foreign('transferred_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('transferred_by')->constrained('users')->onDelete('cascade');
             $table->timestamp('transferred_at')->nullable();
         });
     }

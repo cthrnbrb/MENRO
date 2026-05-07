@@ -9,17 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_organizations', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('user_id', false, true);
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->integer('organization_id', false, true);
-            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
-            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('organization_id')->constrained()->onDelete('cascade');
+            $table->enum('org_role', ['president', 'member'])->default('member');
+            $table->enum('status', ['pending', 'accepted', 'rejected', 'removed'])->default('pending');
             $table->timestamp('requested_at');
             $table->timestamp('responded_at')->nullable();
-            $table->integer('responded_by', false, true)->nullable();
-            $table->foreign('responded_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreignId('responded_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('joined_at')->nullable();
+            $table->timestamp('removed_at')->nullable();
+            $table->foreignId('removed_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->text('removal_remarks')->nullable();
             $table->unique(['user_id', 'organization_id']);
         });
     }

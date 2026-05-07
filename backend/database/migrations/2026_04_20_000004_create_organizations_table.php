@@ -9,10 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('organizations', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
+            $table->id();
             $table->string('org_name', 50);
-            $table->integer('president_id', false, true)->nullable();
-            $table->foreign('president_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreignId('president_id')->constrained('users')->onDelete('cascade');
             $table->string('organization_code', 6)->unique();
         });
     }

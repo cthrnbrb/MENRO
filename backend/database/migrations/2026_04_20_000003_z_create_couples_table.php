@@ -9,11 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('couples', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('user_id', false, true);
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->integer('partner_user_id', false, true);
-            $table->foreign('partner_user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('partner_user_id')->constrained('users')->onDelete('cascade');
             $table->string('or_number', 50);
             $table->timestamp('created_at')->nullable();
 

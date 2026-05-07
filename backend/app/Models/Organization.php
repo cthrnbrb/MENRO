@@ -18,9 +18,52 @@ class Organization extends Model
         'organization_code',
     ];
 
+    /**
+     * Get the president of the organization.
+     */
     public function president()
     {
         return $this->belongsTo(User::class, 'president_id');
+    }
+
+    /**
+     * Get the president's user organization record
+     */
+    public function presidentUserOrganization()
+    {
+        return $this->hasOne(UserOrganization::class, 'organization_id')
+                    ->where('org_role', 'president');
+    }
+
+    /**
+     * Get members of the organization (excluding president)
+     */
+    public function members()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            UserOrganization::class,
+            'organization_id',
+            'id',
+            'id',
+            'user_id'
+        )->where('user_organizations.org_role', 'member')
+         ->where('user_organizations.status', 'accepted');
+    }
+
+    /**
+     * Get pending join requests
+     */
+    public function pendingJoinRequests()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            UserOrganization::class,
+            'organization_id',
+            'id',
+            'id',
+            'user_id'
+        )->where('user_organizations.status', 'pending');
     }
 
     public function userOrganizations()

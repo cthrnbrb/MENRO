@@ -9,9 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('user_id', false, true);
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title', 100);
             $table->text('message');
             $table->enum('type', [
@@ -26,7 +25,7 @@ return new class extends Migration
                 'join_accepted',
                 'join_rejected'
             ]);
-            $table->enum('role_target', ['admin', 'staff', 'president', 'couple', 'organization']);
+            $table->enum('role_target', ['admin', 'staff', 'organization', 'couple']);
             $table->boolean('is_read')->default(false);
             $table->integer('related_id')->nullable();
             $table->timestamp('created_at')->nullable();

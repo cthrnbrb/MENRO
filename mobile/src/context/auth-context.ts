@@ -7,7 +7,7 @@ import { router } from "expo-router";
 interface User {
   id: string;
   email: string;
-  role: 'admin' | 'monitoring staff' | 'president' | 'organization' | 'couple';
+  role: 'admin' | 'monitoring staff' | 'organization' | 'couple';
   first_name: string;
   middle_name?: string;
   last_name: string;
@@ -37,11 +37,15 @@ interface UserOrganization {
   id: string;
   user_id: string;
   organization_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  org_role: 'president' | 'member';
+  status: 'pending' | 'accepted' | 'rejected' | 'removed';
   requested_at?: string;
   responded_at?: string;
   responded_by?: string;
   joined_at?: string;
+  removed_at?: string;
+  removed_by?: string;
+  removal_remarks?: string;
   organization?: Organization;
 }
 
@@ -211,11 +215,12 @@ export const useAuth = create<AuthState>((set, get) => ({
         throw new Error('User not authenticated');
       }
 
-      // Add the new organization to the list with pending status
+      // Add the new organization to the list with pending status and member role
       const newOrg: UserOrganization = {
         id: response.data.data.organization.id,
         user_id: userId,
         organization_id: response.data.data.organization.id,
+        org_role: 'member',
         status: 'pending',
         requested_at: new Date().toISOString(),
         organization: response.data.data.organization
@@ -238,9 +243,6 @@ export const useAuth = create<AuthState>((set, get) => ({
           router.replace('/planters/my-trees' as any);
           break;
         case 'couple':
-          router.replace('/planters/my-trees' as any);
-          break;
-        case 'president':
           router.replace('/planters/my-trees' as any);
           break;
         default:

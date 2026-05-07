@@ -58,7 +58,7 @@ class OrganizationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'org_name' => 'required|string|max:255',
-            'president_id' => 'nullable|exists:users,id',
+            'president_id' => 'required|exists:users,id',
             'organization_code' => 'required|string|max:6|unique:organizations',
         ]);
 
@@ -70,11 +70,29 @@ class OrganizationController extends Controller
         }
 
         try {
-            // Create organization only
+            // Verify president user has role = 'organization'
+            $president = User::findOrFail($request->president_id);
+            if ($president->role !== 'organization') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'President must have role set to "organization"'
+                ], 422);
+            }
+
+            // Create organization with president
             $organization = Organization::create([
                 'org_name' => $request->org_name,
                 'president_id' => $request->president_id,
                 'organization_code' => $request->organization_code,
+            ]);
+
+            // Automatically create president's user organization record
+            \App\Models\UserOrganization::create([
+                'user_id' => $request->president_id,
+                'organization_id' => $organization->id,
+                'org_role' => 'president',
+                'status' => 'accepted',
+                'joined_at' => now(),
             ]);
 
             return response()->json([
@@ -189,6 +207,162 @@ class OrganizationController extends Controller
         return response()->json([
             'success' => true,
             'data' => $users
+        ]);
+    }
+
+    /**
+     * Get pending join requests for an organization
+     */
+    public function getPendingRequests($id)
+    {
+        $organization = Organization::findOrFail($id);
+        
+        $pendingRequests = \App\Models\UserOrganization::with('user')
+            ->where('organization_id', $id)
+            ->where('status', 'pending')
+            ->where('org_role', 'member')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $pendingRequests
+        ]);
+    }
+
+    /**
+     * Respond to join request (accept/reject)
+     */
+    public function respondToJoinRequest(Request $request, $organizationId, $requestId)
+    {
+        $user = auth()->user();
+        
+        // Verify user is president of this organization
+        $presidentMembership = \App\Models\UserOrganization::where('organization_id', $organizationId)
+            ->where('user_id', $user->id)
+            ->where('org_role', 'president')
+            ->where('status', 'accepted')
+            ->first();
+
+        if (!$presidentMembership) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only the organization president can respond to join requests'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'action' => 'required|in:accept,reject',
+            'remarks' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $joinRequest = \App\Models\UserOrganization::findOrFail($requestId);
+        
+        if ($joinRequest->organization_id != $organizationId || $joinRequest->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid join request'
+            ], 400);
+        }
+
+        $action = $request->action;
+        
+        if ($action === 'accept') {
+            $joinRequest->update([
+                'status' => 'accepted',
+                'responded_at' => now(),
+                'responded_by' => $user->id,
+                'joined_at' => now(),
+            ]);
+
+            // Create notification for accepted member
+            \App\Models\Notification::create([
+                'user_id' => $joinRequest->user_id,
+                'title' => 'Join Request Accepted',
+                'message' => 'Your join request to ' . $joinRequest->organization->org_name . ' has been accepted.',
+                'type' => 'join_accepted',
+                'role_target' => 'organization',
+                'related_id' => $organizationId,
+            ]);
+
+            $message = 'Join request accepted successfully';
+        } else {
+            $joinRequest->update([
+                'status' => 'rejected',
+                'responded_at' => now(),
+                'responded_by' => $user->id,
+            ]);
+
+            // Create notification for rejected member
+            \App\Models\Notification::create([
+                'user_id' => $joinRequest->user_id,
+                'title' => 'Join Request Rejected',
+                'message' => 'Your join request to ' . $joinRequest->organization->org_name . ' has been rejected.',
+                'type' => 'join_rejected',
+                'role_target' => 'organization',
+                'related_id' => $organizationId,
+            ]);
+
+            $message = 'Join request rejected successfully';
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => $joinRequest->load('user')
+        ]);
+    }
+
+    /**
+     * Remove a member from organization (president only)
+     */
+    public function removeMember(Request $request, $organizationId, $userId)
+    {
+        $user = auth()->user();
+        
+        // Verify user is president of this organization
+        $presidentMembership = \App\Models\UserOrganization::where('organization_id', $organizationId)
+            ->where('user_id', $user->id)
+            ->where('org_role', 'president')
+            ->where('status', 'accepted')
+            ->first();
+
+        if (!$presidentMembership) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only the organization president can remove members'
+            ], 403);
+        }
+
+        $memberMembership = \App\Models\UserOrganization::where('organization_id', $organizationId)
+            ->where('user_id', $userId)
+            ->where('org_role', 'member')
+            ->where('status', 'accepted')
+            ->first();
+
+        if (!$memberMembership) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Member not found in this organization'
+            ], 404);
+        }
+
+        $memberMembership->update([
+            'status' => 'removed',
+            'removed_at' => now(),
+            'removed_by' => $user->id,
+            'removal_remarks' => $request->remarks,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Member removed successfully'
         ]);
     }
 }

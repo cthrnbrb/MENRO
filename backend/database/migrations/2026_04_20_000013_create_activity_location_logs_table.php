@@ -9,20 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('activity_location_logs', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('activity_id', false, true);
-            $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
-            $table->integer('old_barangay_id', false, true)->nullable();
-            $table->foreign('old_barangay_id')->references('id')->on('barangays')->onDelete('set null');
-            $table->integer('new_barangay_id', false, true)->nullable();
-            $table->foreign('new_barangay_id')->references('id')->on('barangays')->onDelete('set null');
-            $table->decimal('old_lat', 10, 7)->nullable();
-            $table->decimal('old_lng', 10, 7)->nullable();
-            $table->decimal('new_lat', 10, 7)->nullable();
-            $table->decimal('new_lng', 10, 7)->nullable();
+            $table->id();
+            $table->foreignId('activity_id')->constrained('planting_activities')->onDelete('cascade');
+            $table->foreignId('old_barangay_id')->nullable()->constrained('barangays')->onDelete('set null');
+            $table->foreignId('new_barangay_id')->nullable()->constrained('barangays')->onDelete('set null');
+            $table->double('old_lat')->nullable();
+            $table->double('old_lng')->nullable();
+            $table->double('new_lat')->nullable();
+            $table->double('new_lng')->nullable();
             $table->text('remarks')->nullable();
-            $table->integer('changed_by', false, true);
-            $table->foreign('changed_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('changed_by')->constrained('users')->onDelete('cascade');
             $table->timestamp('changed_at')->nullable();
         });
     }

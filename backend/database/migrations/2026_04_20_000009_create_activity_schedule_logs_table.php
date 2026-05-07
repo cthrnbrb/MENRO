@@ -9,14 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('activity_schedule_logs', function (Blueprint $table) {
-            $table->integer('id', false, true)->primary()->autoIncrement();
-            $table->integer('activity_id', false, true);
-            $table->foreign('activity_id')->references('id')->on('planting_activities')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('activity_id')->constrained('planting_activities')->onDelete('cascade');
             $table->date('old_date')->nullable();
             $table->date('new_date')->nullable();
             $table->text('remarks')->nullable();
-            $table->integer('changed_by', false, true);
-            $table->foreign('changed_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('changed_by')->constrained('users')->onDelete('cascade');
             $table->timestamp('changed_at')->nullable();
         });
     }

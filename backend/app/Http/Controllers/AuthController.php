@@ -176,10 +176,11 @@ class AuthController extends Controller
                 ], 400);
             }
 
-            // Create join request with pending status
+            // Create join request with pending status and member role
             \App\Models\UserOrganization::create([
                 'user_id' => $user->id,
                 'organization_id' => $organization->id,
+                'org_role' => 'member', // New field to distinguish from president
                 'status' => 'pending',
                 'requested_at' => now(),
             ]);

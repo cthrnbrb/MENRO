@@ -27,6 +27,17 @@ class User extends Authenticatable
         'deleted_by',
     ];
 
+    /**
+     * The possible roles for a user.
+     * Note: 'president' role has been removed and merged into 'organization'.
+     */
+    public const ROLES = [
+        'admin' => 'admin',
+        'monitoring staff' => 'monitoring staff',
+        'organization' => 'organization',
+        'couple' => 'couple',
+    ];
+
     protected $hidden = [
         'password',
     ];
@@ -71,6 +82,45 @@ class User extends Authenticatable
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by');
+    }
+
+    /**
+     * Check if user is an organization president
+     */
+    public function isOrganizationPresident()
+    {
+        return $this->role === 'organization' && 
+               $this->userOrganizations()->where('org_role', 'president')->exists();
+    }
+
+    /**
+     * Get organizations where user is president
+     */
+    public function presidentOrganizations()
+    {
+        return $this->hasManyThrough(
+            Organization::class,
+            UserOrganization::class,
+            'user_id',
+            'id',
+            'id',
+            'organization_id'
+        )->where('user_organizations.org_role', 'president');
+    }
+
+    /**
+     * Get organizations where user is a member
+     */
+    public function memberOrganizations()
+    {
+        return $this->hasManyThrough(
+            Organization::class,
+            UserOrganization::class,
+            'user_id',
+            'id',
+            'id',
+            'organization_id'
+        )->where('user_organizations.org_role', 'member');
     }
 
 }
