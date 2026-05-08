@@ -8,6 +8,17 @@ export default function Footer() {
 
   const isActive = (path: string) => pathname === path;
 
+  const isCouplesArea = pathname?.startsWith("/couples");
+  const isPlantersArea = pathname?.startsWith("/planters");
+
+  // Routes differ by role. The footer should not always navigate to planters screens.
+  const homeRoute = isCouplesArea ? "/couples/my-trees" : "/planters/my-trees";
+  const profileRoute = isCouplesArea ? "/couples/profile" : "/planters/profile";
+  const fabRoute = isCouplesArea ? "/couples/update-tree" : "/planters";
+
+  const homeActive = isActive(homeRoute);
+  const profileActive = isActive(profileRoute);
+
   return (
     <View style={styles.container}>
       <View style={styles.footer}>
@@ -15,14 +26,14 @@ export default function Footer() {
         {/* LEFT ICON */}
         <TouchableOpacity
           style={styles.iconContainer}
-          onPress={() => router.push("/planters/my-trees")}
+          onPress={() => router.push(homeRoute)}
         >
           <MaterialIcons
             name="home"
             size={24}
-            color={isActive("/planters/my-trees") ? "#10b981" : "#9ca3af"}
+            color={homeActive ? "#10b981" : "#9ca3af"}
           />
-          <Text style={[styles.label, isActive("/planters/my-trees") && styles.activeLabel]}>
+          <Text style={[styles.label, homeActive && styles.activeLabel]}>
             Home
           </Text>
         </TouchableOpacity>
@@ -30,14 +41,14 @@ export default function Footer() {
         {/* RIGHT ICON */}
         <TouchableOpacity
           style={styles.iconContainer}
-          onPress={() => router.push("/planters/profile")}
+          onPress={() => router.push(profileRoute)}
         >
           <MaterialIcons
             name="person"
             size={24}
-            color={isActive("/planters/profile") ? "#10b981" : "#9ca3af"}
+            color={profileActive ? "#10b981" : "#9ca3af"}
           />
-          <Text style={[styles.label, isActive("/planters/profile") && styles.activeLabel]}>
+          <Text style={[styles.label, profileActive && styles.activeLabel]}>
             Profile
           </Text>
         </TouchableOpacity>
@@ -45,7 +56,7 @@ export default function Footer() {
         {/* CENTER FLOATING BUTTON */}
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => router.push("/planters")}
+          onPress={() => router.push(fabRoute)}
         >
           <MaterialIcons name="add" size={26} color="#fff" />
         </TouchableOpacity>

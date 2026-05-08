@@ -33,7 +33,10 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        
+        // Run couple seeder for testing
+        $this->call([
+            CoupleSeeder::class,
+        ]);
 
     }
 }
