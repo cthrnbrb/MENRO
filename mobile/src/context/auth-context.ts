@@ -140,7 +140,8 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       set({ loading: true });
       const response = await axios.post("/login", data);
-      await setToken(response.data.token);
+      // Keep in-memory token immediately; persist in background to avoid blocking redirect.
+      void setToken(response.data.token);
       
       // Set user and organizations from response
       set({ 
@@ -148,33 +149,42 @@ export const useAuth = create<AuthState>((set, get) => ({
         organizations: response.data.organizations || []
       });
       
-      // Check if user has organizations
-      if (response.data.organizations && response.data.organizations.length > 0) {
-        // User has organizations, redirect based on user role
-        const userRole = response.data.user.role;
-        console.log('User role:', userRole);
-        switch (userRole) {
-          case 'organization':
+      // Redirect based on user role
+      const userRole = response.data.user.role;
+      console.log('User role:', userRole);
+      
+      switch (userRole) {
+        case 'couple':
+          // Couples skip organization join, go directly to dashboard
+          router.replace('/couples/my-trees' as any);
+          break;
+        case 'organization':
+          // Organization planters need to join an org first if they haven't
+          if (response.data.organizations && response.data.organizations.length > 0) {
             router.replace('/planters/my-trees' as any);
-            break;
-          case 'monitoring staff':
-            router.replace('/monitoring' as any);
-            break;
-          case 'admin':
-            router.replace('/planters/my-trees' as any);
-            break;
-          case 'couple':
-            router.replace('/planters/my-trees' as any);
-            break;
-          default:
-            router.replace('/planters/my-trees' as any);
-        }
-      } else {
-        // User has no organizations, redirect to code page to join
-        router.replace('/code' as any);
+          } else {
+            router.replace('/code' as any);
+          }
+          break;
+        case 'monitoring staff':
+          router.replace('/monitoring' as any);
+          break;
+        case 'admin':
+          router.replace('/planters/my-trees' as any);
+          break;
+        default:
+          router.replace('/planters/my-trees' as any);
       }
     } catch (error: any) {
-      Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials');
+      let message = error.response?.data?.message || 'Invalid credentials';
+
+      if (error.code === "ECONNABORTED") {
+        message = "Login request timed out. Please check server connection.";
+      } else if (error.code === "ERR_NETWORK") {
+        message = "Cannot reach server. Check your API IP address and internet.";
+      }
+
+      Alert.alert('Login Failed', message);
     } finally {
       set({ loading: false });
     }
@@ -233,6 +243,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       // Redirect based on user role
       const userRole = get().user?.role;
       switch (userRole) {
+        case 'couple':
+          router.replace('/couples/my-trees' as any);
+          break;
         case 'organization':
           router.replace('/planters/my-trees' as any);
           break;
@@ -240,9 +253,6 @@ export const useAuth = create<AuthState>((set, get) => ({
           router.replace('/monitoring' as any);
           break;
         case 'admin':
-          router.replace('/planters/my-trees' as any);
-          break;
-        case 'couple':
           router.replace('/planters/my-trees' as any);
           break;
         default:

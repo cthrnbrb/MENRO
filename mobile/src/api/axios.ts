@@ -1,8 +1,13 @@
   import axiosClient from "axios";
 import { getToken } from "@/src/services/auth-storage";
 
+const baseURL =
+  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ||
+  "http://192.168.1.2:8000/api";
+
 const axios = axiosClient.create({
-  baseURL: "http://192.168.1.52:8000/api",
+  baseURL,
+  timeout: 15000,
   headers: {
     Accept: "application/json",
   },

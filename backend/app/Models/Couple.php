@@ -9,6 +9,8 @@ class Couple extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'couples';
 
     protected $fillable = [

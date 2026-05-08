@@ -10,11 +10,10 @@ import {
   RefreshControl,
   TextInput,
 } from "react-native";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { getToken } from "@/src/services/auth-storage";
-import { useCallback } from "react";
 import Footer from "@/src/components/Footer";
 import axios from "@/src/api/axios";
 
@@ -61,29 +60,38 @@ export default function CoupleMyTreesScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
-    fetchUserProfile();
+    fetchUserProfile(true); // Show loading on initial mount
     fetchTrees();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchUserProfile();
-    }, [])
-  );
+  // Data is loaded once on mount and persisted
+  // No need to refetch on focus - this prevents state clearing when navigating back
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = async (showLoading = false) => {
+    // Only show loading on initial fetch, not on background refresh
+    if (showLoading && !user) {
+      setProfileLoading(true);
+    }
+    
     try {
       const response = await axios.get('/user/profile');
+      console.log("Profile response:", response.data);
 
-      if (response.data) {
+      if (response.data && response.data.data) {
+        console.log("Setting user:", response.data.data.user);
         setUser(response.data.data.user);
         setOrganization(response.data.data.organization);
         setStatistics(response.data.data.statistics);
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      // Don't clear existing user data on error - keep previous state
+      // This ensures UI remains visible even if fetch fails
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -114,47 +122,29 @@ export default function CoupleMyTreesScreen() {
     return date.toLocaleDateString();
   };
 
-  const getCurrentQuarter = () => {
-    const month = new Date().getMonth() + 1;
-    if (month <= 3) return 'Q1';
-    if (month <= 6) return 'Q2';
-    if (month <= 9) return 'Q3';
-    return 'Q4';
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
-        <Text style={styles.loadingText}>Loading your trees...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <TouchableOpacity
-                onPress={() => router.push("/planters/profile")}
+                onPress={() => router.push("/couples/profile")}
                 style={styles.profileImageContainer}
               >
-                {user?.photo ? (
+                {profileLoading ? (
+                  <View style={styles.profileImagePlaceholder}>
+                    <ActivityIndicator size="small" color="#10b981" />
+                  </View>
+                ) : user?.photo ? (
                   <Image
                     source={{
                       uri: user.photo.startsWith("http")
                         ? user.photo
-                        : `http://192.168.1.52:8000/${user.photo}`,
+                        : `http://192.168.1.2:8000/${user.photo}`,
                     }}
                     style={styles.profileImage}
                   />
@@ -165,9 +155,26 @@ export default function CoupleMyTreesScreen() {
                 )}
               </TouchableOpacity>
               <View style={styles.greetingContainer}>
-                <Text style={styles.greeting}>Good Morning,</Text>
-                <Text style={styles.userName}>{user?.first_name}</Text>
+                {profileLoading ? (
+                  <Text style={styles.welcomeText}>Welcome, Guest</Text>
+                ) : (
+                  <Text style={styles.welcomeText}>
+                    Welcome, {user?.first_name || 'Guest'}
+                  </Text>
+                )}
               </View>
+            </View>
+            <View style={styles.logosContainer}>
+              <Image
+                source={require("@/assets/images/OpolLogo.png")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+              <Image
+                source={require("@/assets/images/menrologo.jpg")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
             </View>
           </View>
         </View>
@@ -178,45 +185,195 @@ export default function CoupleMyTreesScreen() {
             <View style={styles.bannerTextContainer}>
               <Text style={styles.bannerTitle}>MENRO</Text>
               <Text style={styles.bannerSubtitle}>
-                Quarterly Tree Updates - {getCurrentQuarter()}
+                Trees are important in out Ecosystem, it provides protection
               </Text>
             </View>
             <View style={styles.bannerImageContainer}>
               <Image
                 source={require("@/assets/images/tree_banner.png")}
                 style={styles.bannerImage}
+                resizeMode="cover"
               />
             </View>
           </View>
         </View>
 
         {/* Statistics Cards */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              {statistics?.total_trees || 0}
-            </Text>
-            <Text style={styles.statLabel}>Total Trees</Text>
+        {(statistics || profileLoading) && (
+          <View style={styles.statsContainer}>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <View style={styles.statIconContainer}>
+                  <Image
+                    source={require("@/assets/images/total.png")}
+                    style={styles.statIcon}
+                  />
+                </View>
+                <View style={styles.statInfo}>
+                  <Text style={styles.statLabel}>Total Trees</Text>
+                  <Text style={styles.statValue}>{statistics?.total_trees ?? 0}</Text>
+                </View>
+              </View>
+              <View style={styles.statItem}>
+                <View style={styles.statIconContainer}>
+                  <Image
+                    source={require("@/assets/images/rate.png")}
+                    style={styles.statIcon}
+                  />
+                </View>
+                <View style={styles.statInfo}>
+                  <Text style={styles.statLabel}>Survival Rate</Text>
+                  <Text style={styles.statValue}>
+                    {statistics?.survival_rate ?? 0}%
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <View style={styles.statIconContainer}>
+                  <Image
+                    source={require("@/assets/images/alive.png")}
+                    style={styles.statIcon}
+                  />
+                </View>
+                <View style={styles.statInfo}>
+                  <Text style={styles.statLabel}>Alive</Text>
+                  <Text style={styles.statValue}>{statistics?.alive_trees ?? 0}</Text>
+                </View>
+              </View>
+              <View style={styles.statItem}>
+                <View style={styles.statIconContainer}>
+                  <Image
+                    source={require("@/assets/images/dead.png")}
+                    style={styles.statIcon}
+                  />
+                </View>
+                <View style={styles.statInfo}>
+                  <Text style={styles.statLabel}>Dead</Text>
+                  <Text style={styles.statValue}>{statistics?.dead_trees ?? 0}</Text>
+                </View>
+              </View>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              {statistics?.alive_trees || 0}
-            </Text>
-            <Text style={styles.statLabel}>Alive</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{statistics?.dead_trees || 0}</Text>
-            <Text style={styles.statLabel}>Dead</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              {statistics?.survival_rate || 0}%
-            </Text>
-            <Text style={styles.statLabel}>Survival Rate</Text>
-          </View>
+        )}
+
+        {/* Add Tree Button */}
+        <TouchableOpacity
+          style={styles.addTreeButton}
+          onPress={() => router.push("/planters")}
+        >
+          <MaterialIcons name="add" size={24} color="white" />
+          <Text style={styles.addTreeButtonText}>Add Tree</Text>
+        </TouchableOpacity>
+
+        {/* Send Photo Update Button - Couples specific */}
+        <TouchableOpacity
+          style={styles.updateTreeButton}
+          onPress={() => router.push("/couples/update-tree")}
+        >
+          <MaterialIcons name="photo-camera" size={24} color="white" />
+          <Text style={styles.updateTreeButtonText}>Send Photo Update</Text>
+        </TouchableOpacity>
+
+        {/* Trees List Section */}
+        <View style={styles.treesSection}>
+          <Text style={styles.sectionTitle}>My Trees</Text>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#10b981" />
+            </View>
+          ) : trees.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="park" size={64} color="#d1d5db" />
+              <Text style={styles.emptyText}>No trees planted yet</Text>
+              <Text style={styles.emptySubtext}>
+                Start by geo-tagging your first tree
+              </Text>
+            </View>
+          ) : (
+            <ScrollView
+              style={styles.treeListScrollView}
+              contentContainerStyle={styles.treeListContent}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            >
+              {trees.map((tree) => (
+                <TouchableOpacity
+                  key={tree.id}
+                  style={styles.treeCard}
+                  onPress={() => handleTreePress(tree)}
+                >
+                  <View style={styles.treePhotoContainer}>
+                    {tree.photo ? (
+                      <Image
+                        source={{ uri: tree.photo }}
+                        style={styles.treePhoto}
+                      />
+                    ) : (
+                      <View style={styles.treePhotoPlaceholder}>
+                        <MaterialIcons
+                          name="nature"
+                          size={32}
+                          color="#9ca3af"
+                        />
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.treeInfo}>
+                    <Text style={styles.treeSpecies}>{tree.tree_species}</Text>
+                    <View style={styles.treeMeta}>
+                      <MaterialIcons
+                        name="location-on"
+                        size={14}
+                        color="#6b7280"
+                      />
+                      <Text style={styles.treeMetaText}>
+                        {tree.latitude.toFixed(4)}, {tree.longitude.toFixed(4)}
+                      </Text>
+                    </View>
+                    <View style={styles.treeMeta}>
+                      <MaterialIcons name="event" size={14} color="#6b7280" />
+                      <Text style={styles.treeMetaText}>
+                        Planted: {formatDate(tree.planted_at)}
+                      </Text>
+                    </View>
+                    <View style={styles.syncStatus}>
+                      {tree.synced_at ? (
+                        <View style={styles.syncedBadge}>
+                          <FontAwesome
+                            name="check-circle"
+                            size={12}
+                            color="#10b981"
+                          />
+                          <Text style={styles.syncedText}>Synced</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.unsyncedBadge}>
+                          <FontAwesome
+                            name="hourglass"
+                            size={12}
+                            color="#f59e0b"
+                          />
+                          <Text style={styles.unsyncedText}>Pending Sync</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                  <MaterialIcons
+                    name="chevron-right"
+                    size={24}
+                    color="#9ca3af"
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
-        {/* Instructions */}
+        {/* Instructions - Couples specific */}
         <View style={styles.instructionsContainer}>
           <Text style={styles.instructionsTitle}>
             How to Update Tree Status
@@ -228,65 +385,10 @@ export default function CoupleMyTreesScreen() {
             2. The photo will be sent for admin validation
           </Text>
           <Text style={styles.instructionsText}>
-            3. Admin will determine if the tree is alive or dead
+            3. Admin will update tree status based on photo
           </Text>
-          <Text style={styles.instructionsText}>
-            4. You can update once per quarter
-          </Text>
-        </View>
-
-        {/* Trees List */}
-        <View style={styles.treesSection}>
-          <Text style={styles.sectionTitle}>Your Trees</Text>
-          {trees.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="eco" size={64} color="#9ca3af" />
-              <Text style={styles.emptyText}>No trees planted yet</Text>
-            </View>
-          ) : (
-            trees.map((tree) => (
-              <TouchableOpacity
-                key={tree.id}
-                style={styles.treeCard}
-                onPress={() => handleTreePress(tree)}
-              >
-                <View style={styles.treeCardLeft}>
-                  {tree.photo ? (
-                    <Image
-                      source={{
-                        uri: tree.photo.startsWith("http")
-                          ? tree.photo
-                          : `http://10.0.0.53:8000/${tree.photo}`,
-                      }}
-                      style={styles.treePhoto}
-                    />
-                  ) : (
-                    <View style={styles.treePhotoPlaceholder}>
-                      <MaterialIcons name="park" size={32} color="#4CAF50" />
-                    </View>
-                  )}
-                  <View style={styles.treeInfo}>
-                    <Text style={styles.treeSpecies}>{tree.tree_species}</Text>
-                    <Text style={styles.treeDate}>
-                      Planted: {formatDate(tree.planted_at)}
-                    </Text>
-                    <Text style={styles.treeLocation}>
-                      {tree.latitude.toFixed(4)}, {tree.longitude.toFixed(4)}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.treeCardRight}>
-                  <TouchableOpacity style={styles.detailsButton} onPress={() => handleTreePress(tree)}>
-                    <MaterialIcons name="location-on" size={20} color="#2196F3" />
-                    <Text style={styles.buttonText}>Details</Text>
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
         </View>
       </ScrollView>
-
       <Footer />
     </View>
   );
@@ -295,33 +397,33 @@ export default function CoupleMyTreesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: "#666",
+    backgroundColor: "#fff",
   },
   header: {
-    backgroundColor: "#4CAF50",
+    padding: 20,
     paddingTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
+    backgroundColor: "#fff",
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 24,
+  },
+  logosContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  logoImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
   profileImageContainer: {
     marginRight: 12,
@@ -335,119 +437,168 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#f3f4f6",
     justifyContent: "center",
     alignItems: "center",
   },
   greetingContainer: {
-    flexDirection: "column",
+    marginLeft: 12,
   },
-  greeting: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
-  },
-  userName: {
-    fontSize: 20,
+  welcomeText: {
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#1f2937",
   },
   bannerContainer: {
-    margin: 16,
-    borderRadius: 16,
-    overflow: "hidden",
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  bannerContent: {
+    flexDirection: "row",
     backgroundColor: "#fff",
-    elevation: 2,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  bannerContent: {
-    flexDirection: "row",
-    padding: 16,
+    elevation: 3,
   },
   bannerTextContainer: {
     flex: 1,
     justifyContent: "center",
   },
   bannerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#4CAF50",
-    marginBottom: 4,
+    color: "#1f2937",
+    marginBottom: 8,
   },
   bannerSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#6b7280",
+    lineHeight: 20,
   },
   bannerImageContainer: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
+    marginLeft: 16,
   },
   bannerImage: {
     width: "100%",
     height: "100%",
-    resizeMode: "contain",
+    borderRadius: 12,
   },
   statsContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: 18,
+    marginTop: 16,
   },
-  statCard: {
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  statItem: {
     flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 4,
+    flexDirection: "row",
     alignItems: "center",
-    elevation: 2,
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
+    elevation: 2,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#4CAF50",
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: "transparent",
+    borderStyle: "dashed",
+  },
+  statIcon: {
+    width: 30,
+    height: 30,
+  },
+  statInfo: {
+    flex: 1,
   },
   statLabel: {
     fontSize: 12,
-    color: "#666",
-    marginTop: 4,
+    color: "#6b7280",
+    marginBottom: 2,
   },
-  instructionsContainer: {
-    backgroundColor: "#fff",
-    margin: 16,
+  statValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1f2937",
+  },
+  addTreeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 20,
+    marginTop: 16,
+    backgroundColor: "#10b981",
     padding: 16,
     borderRadius: 12,
-    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  addTreeButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  updateTreeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#3b82f6",
+    marginHorizontal: 20,
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 4,
   },
-  instructionsTitle: {
+  updateTreeButtonText: {
+    color: "white",
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
-  },
-  instructionsText: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
+    fontWeight: "600",
+    marginLeft: 8,
   },
   treesSection: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingHorizontal: 20,
+    marginTop: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
+    color: "#1f2937",
+    marginBottom: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
   },
   emptyContainer: {
     alignItems: "center",
@@ -455,74 +606,121 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: "#9ca3af",
+    fontWeight: "bold",
+    color: "#6b7280",
     marginTop: 12,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#9ca3af",
+    marginTop: 4,
+  },
+  treeListScrollView: {
+    maxHeight: 400,
+  },
+  treeListContent: {
+    gap: 12,
   },
   treeCard: {
     flexDirection: "row",
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    elevation: 2,
+    padding: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-  },
-  treeCardLeft: {
-    flexDirection: "row",
-    flex: 1,
+    elevation: 2,
     alignItems: "center",
   },
-  treePhoto: {
+  treePhotoContainer: {
     width: 60,
     height: 60,
     borderRadius: 8,
+    overflow: "hidden",
+    marginRight: 12,
+  },
+  treePhoto: {
+    width: "100%",
+    height: "100%",
   },
   treePhotoPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    backgroundColor: "#e8f5e9",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#f3f4f6",
     justifyContent: "center",
     alignItems: "center",
   },
   treeInfo: {
-    marginLeft: 12,
     flex: 1,
   },
   treeSpecies: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 8,
   },
-  treeDate: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4,
-  },
-  treeLocation: {
-    fontSize: 12,
-    color: "#9ca3af",
-    marginTop: 2,
-  },
-  treeCardRight: {
-    justifyContent: "center",
-  },
-  detailsButton: {
+  treeMeta: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#e3f2fd",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    minWidth: 80,
+    marginBottom: 4,
   },
-  buttonText: {
+  treeMetaText: {
     fontSize: 12,
-    fontWeight: "600",
-    marginLeft: 6,
+    color: "#6b7280",
+    marginLeft: 4,
+  },
+  syncStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  syncedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  syncedText: {
+    fontSize: 10,
+    color: "#10b981",
+    fontWeight: "500",
+    marginLeft: 4,
+  },
+  unsyncedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fef3c7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  unsyncedText: {
+    fontSize: 10,
+    color: "#f59e0b",
+    fontWeight: "500",
+    marginLeft: 4,
+  },
+  instructionsContainer: {
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    marginTop: 20,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginBottom: 12,
+  },
+  instructionsText: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginBottom: 8,
+    lineHeight: 20,
   },
 });

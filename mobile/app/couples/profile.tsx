@@ -9,11 +9,12 @@ import {
   Alert,
   TextInput,
   Image,
+  ImageBackground,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons, FontAwesome } from "@expo/vector-icons";
-import { getToken, setToken } from "@/src/services/auth-storage";
+import { setToken } from "@/src/services/auth-storage";
 import * as ImagePicker from 'expo-image-picker';
 import Footer from "@/src/components/Footer";
 import axios from "@/src/api/axios";
@@ -29,6 +30,13 @@ interface User {
   role: string;
   created_at: string;
   photo?: string;
+  spouse?: {
+    id: number;
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
+    email: string;
+  };
 }
 
 interface Organization {
@@ -53,7 +61,7 @@ interface Statistics {
   last_planted: string;
 }
 
-export default function ProfileScreen() {
+export default function CoupleProfileScreen() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -75,21 +83,26 @@ export default function ProfileScreen() {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get('/user/profile');
-      setUser(response.data.data.user);
-      setOrganization(response.data.data.organization);
-      setStatistics(response.data.data.statistics);
-      setPhoto(response.data.data.user.photo || null);
-      setEditForm({
-        first_name: response.data.data.user.first_name,
-        middle_name: response.data.data.user.middle_name || "",
-        last_name: response.data.data.user.last_name,
-        contact_number: response.data.data.user.contact_number,
-        address: response.data.data.user.address,
-      });
+      const response = await axios.get("/user/profile");
+      
+      if (response.data && response.data.data) {
+        setUser(response.data.data.user);
+        setOrganization(response.data.data.organization);
+        setStatistics(response.data.data.statistics);
+        setPhoto(response.data.data.user.photo || null);
+        
+        // Set form data
+        const userData = response.data.data.user;
+        setEditForm({
+          first_name: userData.first_name || "",
+          middle_name: userData.middle_name || "",
+          last_name: userData.last_name || "",
+          contact_number: userData.contact_number || "",
+          address: userData.address || "",
+        });
+      }
     } catch (error) {
-      Alert.alert("Error", "Failed to fetch profile");
-      console.error(error);
+      console.error("Error fetching user profile:", error);
     } finally {
       setLoading(false);
     }
@@ -170,8 +183,6 @@ export default function ProfileScreen() {
 
       setUser(response.data.data);
       setPhoto(response.data.data.photo || null);
-      // Refresh profile to get updated photo
-      await fetchProfile();
       Alert.alert("Success", "Photo updated successfully");
     } catch (error) {
       Alert.alert("Error", "Failed to update photo");
@@ -197,15 +208,6 @@ export default function ProfileScreen() {
     );
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -229,9 +231,24 @@ export default function ProfileScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View style={styles.avatarWrapper}>
+        <ImageBackground
+          source={require("@/assets/images/forest1.jpg")}
+          style={styles.header}
+          imageStyle={styles.headerImage}
+        >
+          <View style={styles.headerOverlay}>
+            <View style={styles.headerTopBar}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <MaterialIcons name="arrow-back" size={28} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>My Profile</Text>
+              <View style={{ width: 28 }} />
+            </View>
+            <View style={styles.headerContent}>
+              <View style={styles.avatarWrapper}>
               <TouchableOpacity
                 onPress={pickImage}
                 style={styles.avatarContainer}
@@ -246,9 +263,15 @@ export default function ProfileScreen() {
                     style={styles.avatar}
                   />
                 ) : (
-                  <View style={styles.avatarPlaceholder}>
-                    <MaterialIcons name="person" size={48} color="#10b981" />
-                  </View>
+                  <ImageBackground
+                    source={require("@/assets/images/forest1.jpg")}
+                    style={styles.avatarPlaceholder}
+                    imageStyle={{ borderRadius: 60 }}
+                  >
+                    <View style={styles.avatarOverlay}>
+                      <MaterialIcons name="person" size={48} color="#fff" />
+                    </View>
+                  </ImageBackground>
                 )}
               </TouchableOpacity>
               <TouchableOpacity
@@ -257,22 +280,23 @@ export default function ProfileScreen() {
               >
                 <MaterialIcons name="edit" size={16} color="white" />
               </TouchableOpacity>
+              {photo && photo !== user?.photo && (
+                <TouchableOpacity
+                  onPress={handleSavePhoto}
+                  style={styles.savePhotoButton}
+                >
+                  <MaterialIcons name="check" size={16} color="white" />
+                  <Text style={styles.savePhotoButtonText}>Save Photo</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            {photo && photo !== user?.photo && (
-              <TouchableOpacity
-                onPress={handleSavePhoto}
-                style={styles.savePhotoButton}
-              >
-                <MaterialIcons name="check" size={16} color="white" />
-                <Text style={styles.savePhotoButtonText}>Save Photo</Text>
-              </TouchableOpacity>
-            )}
             <Text style={styles.headerName}>
               {user.first_name} {user.last_name}
             </Text>
             <Text style={styles.headerRole}>{user.role}</Text>
           </View>
-        </View>
+          </View>
+        </ImageBackground>
 
         {/* Statistics */}
         {statistics && (
@@ -383,7 +407,7 @@ export default function ProfileScreen() {
                 <View style={styles.editRow}>
                   <Text style={styles.editLabel}>Address</Text>
                   <TextInput
-                    style={styles.editInput}
+                    style={[styles.editInput, styles.editInputMultiline]}
                     value={editForm.address}
                     onChangeText={(text) =>
                       setEditForm({ ...editForm, address: text })
@@ -447,6 +471,17 @@ export default function ProfileScreen() {
                     </Text>
                   </View>
                 </View>
+                {user.spouse && (
+                  <View style={styles.infoRow}>
+                    <MaterialIcons name="favorite" size={20} color="#ec4899" />
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>Spouse</Text>
+                      <Text style={styles.infoValue}>
+                        {user.spouse.first_name} {user.spouse.middle_name} {user.spouse.last_name}
+                      </Text>
+                    </View>
+                  </View>
+                )}
               </>
             )}
           </View>
@@ -463,6 +498,15 @@ export default function ProfileScreen() {
   );
 }
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -477,42 +521,68 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 40,
   },
   errorText: {
-    fontSize: 18,
-    color: "#6b7280",
-    marginTop: 16,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ef4444",
   },
   header: {
-    backgroundColor: "#f0fdf4",
-    padding: 20,
-    paddingTop: 60,
+    width: "100%",
+    height: 280,
+  },
+  headerImage: {
+    resizeMode: "cover",
+  },
+  headerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    paddingTop: 50,
+    paddingBottom: 20,
+  },
+  headerTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
   },
   headerContent: {
     alignItems: "center",
   },
   avatarWrapper: {
-    position: "relative",
-    marginBottom: 12,
+    alignItems: "center",
+    marginBottom: 16,
   },
   avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#d1fae5",
-    justifyContent: "center",
-    alignItems: "center",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     overflow: "hidden",
   },
   avatar: {
-    width: "100%",
-    height: "100%",
+    width: 120,
+    height: 120,
   },
   avatarPlaceholder: {
-    width: "100%",
-    height: "100%",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: "hidden",
+  },
+  avatarOverlay: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -520,63 +590,59 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     backgroundColor: "#10b981",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: "#fff",
   },
   savePhotoButton: {
+    position: "absolute",
+    bottom: -40,
+    backgroundColor: "#10b981",
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#10b981",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   savePhotoButtonText: {
     color: "white",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
     marginLeft: 4,
   },
   headerName: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#166534",
+    color: "#fff",
   },
   headerRole: {
-    fontSize: 14,
-    color: "#6b7280",
+    fontSize: 16,
+    color: "rgba(255,255,255,0.8)",
     marginTop: 4,
   },
   statsSection: {
     flexDirection: "row",
     flexWrap: "wrap",
-    padding: 20,
     justifyContent: "space-between",
+    padding: 20,
+    gap: 12,
   },
   statCard: {
     width: "48%",
-    backgroundColor: "#fff",
-    padding: 16,
+    backgroundColor: "#f9fafb",
     borderRadius: 12,
+    padding: 16,
     alignItems: "center",
-    marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#1f2937",
     marginTop: 8,
@@ -587,7 +653,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   section: {
-    padding: 20,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -597,32 +664,29 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "bold",
     color: "#1f2937",
   },
   editButton: {
     padding: 8,
   },
   infoCard: {
-    backgroundColor: "#fff",
-    padding: 16,
+    backgroundColor: "#f9fafb",
     borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   infoRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
   },
   infoContent: {
-    flex: 1,
     marginLeft: 12,
+    flex: 1,
   },
   infoLabel: {
     fontSize: 12,
@@ -630,7 +694,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#1f2937",
     fontWeight: "500",
   },
@@ -638,54 +702,56 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   editLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#6b7280",
     marginBottom: 4,
   },
   editInput: {
-    backgroundColor: "#f9fafb",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    fontSize: 14,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
     color: "#1f2937",
+  },
+  editInputMultiline: {
+    height: 80,
+    textAlignVertical: "top",
   },
   editActions: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 8,
+    justifyContent: "space-between",
+    marginTop: 20,
   },
   cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    backgroundColor: "#6b7280",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: "#f3f4f6",
   },
   cancelButtonText: {
-    color: "#6b7280",
-    fontSize: 14,
-    fontWeight: "500",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
     backgroundColor: "#10b981",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   saveButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "500",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    margin: 20,
     backgroundColor: "#fef2f2",
+    margin: 20,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
