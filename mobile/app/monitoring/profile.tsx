@@ -212,7 +212,7 @@ export default function MonitoringProfileScreen() {
                     source={{
                       uri: photo.startsWith("http")
                         ? photo
-                        : `http://192.168.1.52:8000/${photo}`,
+                        : `http://192.168.1.16:8000/${photo}`,
                     }}
                     style={styles.avatar}
                   />

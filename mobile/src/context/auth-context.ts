@@ -148,30 +148,39 @@ export const useAuth = create<AuthState>((set, get) => ({
         organizations: response.data.organizations || []
       });
       
-      // Check if user has organizations
-      if (response.data.organizations && response.data.organizations.length > 0) {
-        // User has organizations, redirect based on user role
-        const userRole = response.data.user.role;
-        console.log('User role:', userRole);
-        switch (userRole) {
-          case 'organization':
-            router.replace('/planters/my-trees' as any);
-            break;
-          case 'monitoring staff':
-            router.replace('/monitoring' as any);
-            break;
-          case 'admin':
-            router.replace('/planters/my-trees' as any);
-            break;
-          case 'couple':
-            router.replace('/planters/my-trees' as any);
-            break;
-          default:
-            router.replace('/planters/my-trees' as any);
-        }
-      } else {
-        // User has no organizations, redirect to code page to join
-        router.replace('/code' as any);
+      // Redirect based on user role and organization role
+      const userRole = response.data.user.role;
+      const organizations = response.data.organizations || [];
+      console.log('User role:', userRole);
+      console.log('User organizations:', organizations);
+      
+      switch (userRole) {
+        case 'organization':
+          // Check if user has an accepted organization and their org_role
+          const acceptedOrg = organizations.find((org: UserOrganization) => org.status === 'accepted');
+          if (acceptedOrg) {
+            console.log('Organization role:', acceptedOrg.org_role);
+            if (acceptedOrg.org_role === 'president') {
+              router.replace('/organization/president/dashboard' as any);
+            } else {
+              router.replace('/organization/member/my-trees' as any);
+            }
+          } else {
+            // No accepted organization, go to join organization
+            router.replace('/organization/member/join-organization' as any);
+          }
+          break;
+        case 'monitoring staff':
+          router.replace('/monitoring' as any);
+          break;
+        case 'admin':
+          router.replace('/couples/my-trees' as any);
+          break;
+        case 'couple':
+          router.replace('/couples/my-trees' as any);
+          break;
+        default:
+          router.replace('/couples/my-trees' as any);
       }
     } catch (error: any) {
       Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials');
@@ -230,23 +239,36 @@ export const useAuth = create<AuthState>((set, get) => ({
 
       Alert.alert('Success', 'Join request submitted. Waiting for president approval.');
 
-      // Redirect based on user role
+      // Redirect based on user role and organization role
       const userRole = get().user?.role;
+      const organizations = get().organizations || [];
+      
       switch (userRole) {
         case 'organization':
-          router.replace('/planters/my-trees' as any);
+          // Check if user has an accepted organization and their org_role
+          const acceptedOrg = organizations.find((org: UserOrganization) => org.status === 'accepted');
+          if (acceptedOrg) {
+            if (acceptedOrg.org_role === 'president') {
+              router.replace('/organization/president/dashboard' as any);
+            } else {
+              router.replace('/organization/member/my-trees' as any);
+            }
+          } else {
+            // No accepted organization, go to join organization
+            router.replace('/organization/member/join-organization' as any);
+          }
           break;
         case 'monitoring staff':
           router.replace('/monitoring' as any);
           break;
         case 'admin':
-          router.replace('/planters/my-trees' as any);
+          router.replace('/couples/my-trees' as any);
           break;
         case 'couple':
-          router.replace('/planters/my-trees' as any);
+          router.replace('/couples/my-trees' as any);
           break;
         default:
-          router.replace('/planters/my-trees' as any);
+          router.replace('/couples/my-trees' as any);
       }
     } catch (error: any) {
       console.log("Join organization error:", error);

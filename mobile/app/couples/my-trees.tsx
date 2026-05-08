@@ -256,7 +256,7 @@ export default function CoupleMyTreesScreen() {
                       source={{
                         uri: tree.photo.startsWith("http")
                           ? tree.photo
-                          : `http://10.0.0.53:8000/${tree.photo}`,
+                          : `http://192.168.1.16:8000/${tree.photo}`,
                       }}
                       style={styles.treePhoto}
                     />

@@ -104,7 +104,7 @@ export default function GeoTagTreeScreen() {
 
       if (response.data) {
         Alert.alert("Success", "Tree geo-tagged successfully!", [
-          { text: "OK", onPress: () => router.push("/planters/my-trees") },
+          { text: "OK", onPress: () => router.push("/couples/my-trees") },
         ]);
       }
     } catch (error: any) {

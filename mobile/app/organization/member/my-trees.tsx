@@ -53,7 +53,7 @@ interface Statistics {
   survival_rate: number;
 }
 
-export default function MyTreesScreen() {
+export default function OrganizationMyTreesScreen() {
   const router = useRouter();
   const [trees, setTrees] = useState<Tree[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +106,7 @@ export default function MyTreesScreen() {
   };
 
   const handleTreePress = (tree: Tree) => {
-    router.push(`/planters/tree-details?id=${tree.id}`);
+    router.push(`/organization/member/tree-details?id=${tree.id}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -124,7 +124,7 @@ export default function MyTreesScreen() {
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <TouchableOpacity
-                onPress={() => router.push("/planters/profile")}
+                onPress={() => router.push("/organization/member/profile")}
                 style={styles.profileImageContainer}
               >
                 {user?.photo ? (
@@ -232,7 +232,7 @@ export default function MyTreesScreen() {
         {/* Add Tree Button */}
         <TouchableOpacity
           style={styles.addTreeButton}
-          onPress={() => router.push("/planters")}
+          onPress={() => router.push("/organization/member")}
         >
           <MaterialIcons name="add" size={24} color="white" />
           <Text style={styles.addTreeButtonText}>Add Tree</Text>
