@@ -696,7 +696,7 @@ export default function MonitoringProfileScreen() {
         </View>
 
         
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Settings</Text>
           </View>
@@ -730,7 +730,7 @@ export default function MonitoringProfileScreen() {
               <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -771,5 +771,4 @@ export default function MonitoringProfileScreen() {
       <MonitoringNavFooter />
     </View>
 );
-
 }

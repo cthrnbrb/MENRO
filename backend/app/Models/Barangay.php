@@ -26,4 +26,19 @@ class Barangay extends Model
     {
         return $this->hasMany(PlantingActivity::class);
     }
+
+    public function couplePlantingActivities()
+    {
+        return $this->hasMany(CouplePlantingActivity::class);
+    }
+
+    public function coupleLocationLogsAsOld()
+    {
+        return $this->hasMany(CoupleLocationLog::class, 'old_barangay_id');
+    }
+
+    public function coupleLocationLogsAsNew()
+    {
+        return $this->hasMany(CoupleLocationLog::class, 'new_barangay_id');
+    }
 }

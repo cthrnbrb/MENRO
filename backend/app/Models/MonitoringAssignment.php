@@ -14,6 +14,7 @@ class MonitoringAssignment extends Model
 
     protected $fillable = [
         'activity_id',
+        'couple_planting_sched_id',
         'staff_id',
         'assigned_by',
         'assigned_at',
@@ -37,6 +38,11 @@ class MonitoringAssignment extends Model
     public function activity()
     {
         return $this->belongsTo(PlantingActivity::class, 'activity_id');
+    }
+
+    public function couplePlantingSchedule()
+    {
+        return $this->belongsTo(CouplePlantingActivity::class, 'couple_planting_sched_id');
     }
 
     public function staff()

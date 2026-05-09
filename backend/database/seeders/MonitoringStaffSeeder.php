@@ -13,31 +13,15 @@ class MonitoringStaffSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create multiple monitoring staff accounts
+        // Create single monitoring staff account for testing
         $monitoringStaff = [
             [
-                'email' => 'monitor1@test.com',
-                'first_name' => 'John',
-                'middle_name' => 'David',
-                'last_name' => 'Smith',
+                'email' => 'monitor@test.com',
+                'first_name' => 'Test',
+                'middle_name' => 'User',
+                'last_name' => 'Monitor',
                 'contact_number' => '09123456789',
                 'address' => '123 Monitoring Street, Barangay Central, City of Trees',
-            ],
-            [
-                'email' => 'monitor2@test.com',
-                'first_name' => 'Sarah',
-                'middle_name' => 'Grace',
-                'last_name' => 'Johnson',
-                'contact_number' => '09134567890',
-                'address' => '456 Inspection Avenue, Barangay North, City of Trees',
-            ],
-            [
-                'email' => 'monitor3@test.com',
-                'first_name' => 'Michael',
-                'middle_name' => 'James',
-                'last_name' => 'Wilson',
-                'contact_number' => '09145678901',
-                'address' => '789 Survey Road, Barangay South, City of Trees',
             ],
         ];
 
@@ -45,7 +29,7 @@ class MonitoringStaffSeeder extends Seeder
             User::firstOrCreate(
                 ['email' => $staff['email']],
                 [
-                    'password' => Hash::make('monitor123'),
+                    'password' => Hash::make('password123'),
                     'role' => 'monitoring staff',
                     'first_name' => $staff['first_name'],
                     'middle_name' => $staff['middle_name'],
@@ -55,7 +39,7 @@ class MonitoringStaffSeeder extends Seeder
                 ]
             );
 
-            $this->command->info("Monitoring staff created: {$staff['email']} / monitor123");
+            $this->command->info("Monitoring staff created: {$staff['email']} / password123");
         }
     }
 }

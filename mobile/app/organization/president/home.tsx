@@ -36,8 +36,17 @@ export default function PresidentDashboard() {
   const fetchStats = async () => {
     try {
       if (!userOrganization?.organization_id) return;
-      const response = await axios.get(`/organization/${userOrganization.organization_id}/stats`);
-      setStats(response.data);
+      // TODO: Create stats endpoint in backend
+      // const response = await axios.get(`/organization/${userOrganization.organization_id}/stats`);
+      // setStats(response.data);
+      
+      // Temporary fallback data
+      setStats({
+        totalMembers: 0,
+        pendingRequests: 0,
+        activeTrees: 0,
+        totalEvents: 0,
+      });
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {

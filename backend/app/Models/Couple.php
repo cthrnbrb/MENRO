@@ -38,4 +38,9 @@ class Couple extends Model
     {
         return $this->hasMany(Certificate::class, 'couple_id');
     }
+
+    public function plantingActivities()
+    {
+        return $this->hasMany(CouplePlantingActivity::class, 'couple_id');
+    }
 }
