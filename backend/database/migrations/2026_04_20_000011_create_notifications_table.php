@@ -29,6 +29,7 @@ return new class extends Migration
             $table->boolean('is_read')->default(false);
             $table->integer('related_id')->nullable();
             $table->timestamp('created_at')->nullable();
+            $table->timestamp('updated_at')->nullable();
         });
     }
 

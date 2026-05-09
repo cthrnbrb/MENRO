@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/auth-context';
 import { MaterialIcons, FontAwesome, AntDesign } from '@expo/vector-icons';
 import axios from '@/src/api/axios';
+import PresidentFooter from '@/src/components/PresidentFooter';
 
 interface Member {
   id: string;
@@ -50,8 +51,28 @@ export default function OrganizationMembers() {
       if (!userOrganization?.organization_id) return;
       
       const response = await axios.get(`/organization/${userOrganization.organization_id}/members`);
-      setMembers(response.data);
-      setFilteredMembers(response.data);
+      console.log('Members response:', response.data);
+      
+      // Map backend response to frontend expected structure
+      const membersList = (response.data.data || []).map((item: any) => ({
+        id: item.id?.toString(),
+        user_id: item.id?.toString(),
+        org_role: item.org_role || 'member',
+        status: item.membership_status || 'accepted',
+        joined_at: item.joined_at,
+        user: {
+          id: item.id?.toString(),
+          first_name: item.first_name || '',
+          middle_name: item.middle_name || '',
+          last_name: item.last_name || '',
+          email: item.email || '',
+          contact_number: item.contact_number || '',
+          photo: item.photo || null,
+        }
+      }));
+      
+      setMembers(membersList);
+      setFilteredMembers(membersList);
     } catch (error) {
       console.error('Error fetching members:', error);
     } finally {
@@ -68,12 +89,12 @@ export default function OrganizationMembers() {
     if (searchQuery.trim() === '') {
       setFilteredMembers(members);
     } else {
-      const filtered = members.filter(member =>
-        `${member.user.first_name} ${member.user.middle_name} ${member.user.last_name}`
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        member.user.email.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const filtered = members.filter(member => {
+        if (!member.user) return false;
+        const fullName = `${member.user.first_name} ${member.user.middle_name || ''} ${member.user.last_name}`.toLowerCase();
+        return fullName.includes(searchQuery.toLowerCase()) ||
+          (member.user.email && member.user.email.toLowerCase().includes(searchQuery.toLowerCase()));
+      });
       setFilteredMembers(filtered);
     }
   }, [searchQuery, members]);
@@ -102,11 +123,9 @@ export default function OrganizationMembers() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await axios.post(`/organization/${userOrganization?.organization_id}/remove-member`, {
-                user_id: memberId,
-              });
+              await axios.post(`/organization/${userOrganization?.organization_id}/members/${memberId}/remove`);
               
-              setMembers(members.filter(member => member.user.id !== memberId));
+              setMembers(members.filter(member => member.user?.id !== memberId));
               Alert.alert('Success', 'Member removed successfully');
             } catch (error: any) {
               Alert.alert('Error', error.response?.data?.message || 'Failed to remove member');
@@ -129,7 +148,6 @@ export default function OrganizationMembers() {
     <View className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="bg-green-600 pt-12 pb-6 px-6">
-        <Text className="text-white text-2xl font-bold">Organization Members</Text>
         <Text className="text-green-100 text-sm mt-1">
           {filteredMembers.length} {filteredMembers.length === 1 ? 'member' : 'members'}
         </Text>
@@ -180,7 +198,7 @@ export default function OrganizationMembers() {
                 <View className="flex-row items-center">
                   {/* User Avatar */}
                   <View className="w-14 h-14 bg-green-100 rounded-full items-center justify-center mr-4">
-                    {member.user.photo ? (
+                    {member.user?.photo ? (
                       <Image
                         source={{ uri: member.user.photo }}
                         className="w-14 h-14 rounded-full"
@@ -194,7 +212,7 @@ export default function OrganizationMembers() {
                   <View className="flex-1">
                     <View className="flex-row items-center">
                       <Text className="text-lg font-semibold text-gray-800 flex-1">
-                        {member.user.first_name} {member.user.middle_name} {member.user.last_name}
+                        {member.user ? `${member.user.first_name} ${member.user.middle_name || ''} ${member.user.last_name}` : 'Unknown User'}
                       </Text>
                       <View className={`px-2 py-1 rounded-full ${
                         member.org_role === 'president' ? 'bg-yellow-100' : 'bg-blue-100'
@@ -206,23 +224,23 @@ export default function OrganizationMembers() {
                         </Text>
                       </View>
                     </View>
-                    <Text className="text-gray-600 text-sm">{member.user.email}</Text>
-                    {member.user.contact_number && (
+                    <Text className="text-gray-600 text-sm">{member.user?.email || 'No email'}</Text>
+                    {member.user?.contact_number && (
                       <Text className="text-gray-500 text-sm">{member.user.contact_number}</Text>
                     )}
                     <View className="flex-row items-center mt-2">
                       <MaterialIcons name="event" size={14} color="#9ca3af" />
                       <Text className="text-gray-500 text-xs ml-1">
-                        Joined {new Date(member.joined_at).toLocaleDateString()}
+                        Joined {member.joined_at ? new Date(member.joined_at).toLocaleDateString() : 'N/A'}
                       </Text>
                     </View>
                   </View>
 
                   {/* Actions */}
-                  {isPresident && member.user.id !== user?.id && (
+                  {isPresident && member.user?.id !== user?.id && (
                     <TouchableOpacity
                       className="ml-3 p-2"
-                      onPress={() => handleRemoveMember(member.user.id)}
+                      onPress={() => handleRemoveMember(member.user?.id)}
                     >
                       <MaterialIcons name="more-vert" size={20} color="#ef4444" />
                     </TouchableOpacity>
@@ -233,6 +251,7 @@ export default function OrganizationMembers() {
           </View>
         )}
       </ScrollView>
+      <PresidentFooter />
     </View>
   );
 }

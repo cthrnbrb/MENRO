@@ -10,12 +10,6 @@ export default function MemberLayout() {
         }} 
       />
       <Stack.Screen 
-        name="my-trees" 
-        options={{ 
-          headerShown: false 
-        }} 
-      />
-      <Stack.Screen 
         name="tree-details" 
         options={{ 
           headerShown: false 
@@ -28,7 +22,13 @@ export default function MemberLayout() {
         }} 
       />
       <Stack.Screen 
-        name="join-organization" 
+        name="geo-tag-tree" 
+        options={{ 
+          headerShown: false 
+        }} 
+      />
+      <Stack.Screen 
+        name="notification" 
         options={{ 
           headerShown: false 
         }} 

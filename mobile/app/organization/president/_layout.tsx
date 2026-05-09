@@ -4,24 +4,33 @@ export default function PresidentLayout() {
   return (
     <Stack>
       <Stack.Screen 
-        name="dashboard" 
+        name="home" 
         options={{ 
-          title: 'President Dashboard',
-          headerShown: true 
+          headerShown: false 
         }} 
       />
       <Stack.Screen 
         name="members" 
         options={{ 
-          title: 'Members',
-          headerShown: true 
+          headerShown: false 
+        }} 
+      />
+      <Stack.Screen 
+        name="profile" 
+        options={{ 
+          headerShown: false 
+        }} 
+      />
+      <Stack.Screen 
+        name="geo-tag-tree" 
+        options={{ 
+          headerShown: false 
         }} 
       />
       <Stack.Screen 
         name="membership-requests" 
         options={{ 
-          title: 'Membership Requests',
-          headerShown: true 
+          headerShown: false 
         }} 
       />
     </Stack>

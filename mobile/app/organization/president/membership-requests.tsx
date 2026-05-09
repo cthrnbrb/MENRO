@@ -53,13 +53,39 @@ export default function MembershipRequests() {
 
   const fetchRequests = async () => {
     try {
-      if (!userOrganization?.organization_id) return;
+      if (!userOrganization?.organization_id) {
+        console.log('No organization ID found');
+        return;
+      }
       
+      console.log('Fetching requests for organization:', userOrganization.organization_id);
+      // Use the correct endpoint for membership requests
       const response = await axios.get(`/organization/${userOrganization.organization_id}/membership-requests`);
-      setRequests(response.data);
-    } catch (error) {
+      console.log('Membership requests response:', response.data);
+      
+      // Extract pending requests from response and map to expected structure
+      const pendingRequests = (response.data.data || []).map((item: any) => ({
+        id: item.id?.toString(),
+        user_id: item.user_id?.toString(),
+        organization_id: item.organization_id?.toString(),
+        org_role: item.org_role,
+        status: item.status,
+        requested_at: item.requested_at,
+        user: item.user ? {
+          id: item.user.id?.toString(),
+          first_name: item.user.first_name || '',
+          middle_name: item.user.middle_name || '',
+          last_name: item.user.last_name || '',
+          email: item.user.email || '',
+          contact_number: item.user.contact_number || '',
+          photo: item.user.photo || null,
+        } : null,
+      }));
+      console.log('Mapped pending requests:', pendingRequests);
+      setRequests(pendingRequests);
+    } catch (error: any) {
       console.error('Error fetching requests:', error);
-      Alert.alert('Error', 'Failed to fetch membership requests');
+      Alert.alert('Error', error.response?.data?.message || 'Failed to fetch membership requests');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -80,13 +106,14 @@ export default function MembershipRequests() {
   const handleApprove = async (requestId: string) => {
     setProcessing(requestId);
     try {
-      await axios.post(`/organization/${userOrganization?.organization_id}/approve-membership`, {
-        request_id: requestId,
+      await axios.post(`/organization/${userOrganization?.organization_id}/members/${requestId}/respond`, {
+        action: 'accept',
       });
       
       setRequests(requests.filter(req => req.id !== requestId));
       Alert.alert('Success', 'Membership request approved successfully');
     } catch (error: any) {
+      console.error('Approve error:', error);
       Alert.alert('Error', error.response?.data?.message || 'Failed to approve request');
     } finally {
       setProcessing(null);
@@ -105,8 +132,8 @@ export default function MembershipRequests() {
           onPress: async () => {
             setProcessing(requestId);
             try {
-              await axios.post(`/organization/${userOrganization?.organization_id}/reject-membership`, {
-                request_id: requestId,
+              await axios.post(`/organization/${userOrganization?.organization_id}/members/${requestId}/respond`, {
+                action: 'reject',
               });
               
               setRequests(requests.filter(req => req.id !== requestId));
@@ -161,7 +188,7 @@ export default function MembershipRequests() {
                 <View className="flex-row">
                   {/* User Avatar */}
                   <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center mr-4">
-                    {request.user.photo ? (
+                    {request.user?.photo ? (
                       <Image
                         source={{ uri: request.user.photo }}
                         className="w-16 h-16 rounded-full"
@@ -174,10 +201,10 @@ export default function MembershipRequests() {
                   {/* User Info */}
                   <View className="flex-1">
                     <Text className="text-lg font-semibold text-gray-800">
-                      {request.user.first_name} {request.user.middle_name} {request.user.last_name}
+                      {request.user ? `${request.user.first_name} ${request.user.middle_name || ''} ${request.user.last_name}` : 'Unknown User'}
                     </Text>
-                    <Text className="text-gray-600 text-sm">{request.user.email}</Text>
-                    {request.user.contact_number && (
+                    <Text className="text-gray-600 text-sm">{request.user?.email || 'No email'}</Text>
+                    {request.user?.contact_number && (
                       <Text className="text-gray-500 text-sm">{request.user.contact_number}</Text>
                     )}
                     <View className="flex-row items-center mt-2">

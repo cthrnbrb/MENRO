@@ -7,7 +7,7 @@ import { router } from "expo-router";
 interface User {
   id: string;
   email: string;
-  role: 'admin' | 'monitoring staff' | 'organization' | 'couple';
+  role: "admin" | "monitoring staff" | "organization" | "couple";
   first_name: string;
   middle_name?: string;
   last_name: string;
@@ -37,8 +37,8 @@ interface UserOrganization {
   id: string;
   user_id: string;
   organization_id: string;
-  org_role: 'president' | 'member';
-  status: 'pending' | 'accepted' | 'rejected' | 'removed';
+  org_role: "president" | "member";
+  status: "pending" | "accepted" | "rejected" | "removed";
   requested_at?: string;
   responded_at?: string;
   responded_by?: string;
@@ -109,7 +109,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       console.log("Validating code:", code);
       console.log("Base URL:", axios.defaults.baseURL);
-      
+
       const { data } = await axios.post("/validate-code", { code });
       console.log("Validation response:", data);
       return data.valid;
@@ -117,20 +117,24 @@ export const useAuth = create<AuthState>((set, get) => ({
       console.error("Validation error:", error);
       console.error("Error status:", error.response?.status);
       console.error("Error response:", error.response?.data);
-      console.error("Network error:", error.request ? 'Network request failed' : 'No request made');
-      
+      console.error(
+        "Network error:",
+        error.request ? "Network request failed" : "No request made",
+      );
+
       // Show more detailed error message
       let errorMessage = "Invalid code";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
-      } else if (error.code === 'ECONNREFUSED') {
-        errorMessage = "Cannot connect to server. Please check your internet connection.";
-      } else if (error.code === 'ERR_NETWORK') {
+      } else if (error.code === "ECONNREFUSED") {
+        errorMessage =
+          "Cannot connect to server. Please check your internet connection.";
+      } else if (error.code === "ERR_NETWORK") {
         errorMessage = "Network error. Please check if the server is running.";
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       Alert.alert("Error", errorMessage);
       return false;
     }
@@ -142,58 +146,61 @@ export const useAuth = create<AuthState>((set, get) => ({
       const response = await axios.post("/login", data);
       // Keep in-memory token immediately; persist in background to avoid blocking redirect.
       void setToken(response.data.token);
-      
+
       // Set user and organizations from response
-      set({ 
+      set({
         user: response.data.user,
-        organizations: response.data.organizations || []
+        organizations: response.data.organizations || [],
       });
-      
-// Redirect based on user role and organization role
+
+      // Redirect based on user role and organization role
       const userRole = response.data.user.role;
       const organizations = response.data.organizations || [];
-      console.log('User role:', userRole);
-      console.log('User organizations:', organizations);
-      
+      console.log("User role:", userRole);
+      console.log("User organizations:", organizations);
+
       switch (userRole) {
-        case 'couple':
+        case "couple":
           // Couples skip organization join, go directly to dashboard
-          router.replace('/couples/my-trees' as any);
+          router.replace("/couples/my-trees" as any);
           break;
-        case 'organization':
+        case "organization":
           // Check if user has an accepted organization and their org_role
-          const acceptedOrg = organizations.find((org: UserOrganization) => org.status === 'accepted');
+          const acceptedOrg = organizations.find(
+            (org: UserOrganization) => org.status === "accepted",
+          );
           if (acceptedOrg) {
-            console.log('Organization role:', acceptedOrg.org_role);
-            if (acceptedOrg.org_role === 'president') {
-              router.replace('/organization/president/dashboard' as any);
+            console.log("Organization role:", acceptedOrg.org_role);
+            if (acceptedOrg.org_role === "president") {
+              router.replace("/organization/dashboard" as any);
             } else {
-              router.replace('/organization/member/my-trees' as any);
+              router.replace("/organization/dashboard" as any);
             }
           } else {
             // No accepted organization, go to join organization
-            router.replace('/code' as any);
+            router.replace("/organization/dashboard" as any);
           }
           break;
-        case 'monitoring staff':
-          router.replace('/monitoring' as any);
+        case "monitoring staff":
+          router.replace("/monitoring" as any);
           break;
-        case 'admin':
-          router.replace('/couples/my-trees' as any);
+        case "admin":
+          router.replace("/couples/my-trees" as any);
           break;
         default:
-          router.replace('/couples/my-trees' as any);
+          router.replace("/couples/my-trees" as any);
       }
     } catch (error: any) {
-      let message = error.response?.data?.message || 'Invalid credentials';
+      let message = error.response?.data?.message || "Invalid credentials";
 
       if (error.code === "ECONNABORTED") {
         message = "Login request timed out. Please check server connection.";
       } else if (error.code === "ERR_NETWORK") {
-        message = "Cannot reach server. Check your API IP address and internet.";
+        message =
+          "Cannot reach server. Check your API IP address and internet.";
       }
 
-      Alert.alert('Login Failed', message);
+      Alert.alert("Login Failed", message);
     } finally {
       set({ loading: false });
     }
@@ -203,21 +210,27 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       set({ loading: true });
       await axios.post("/register", data);
-      Alert.alert('Success', 'Registration successful! Please login to join an organization.');
-      router.replace('/login');
+      Alert.alert(
+        "Success",
+        "Registration successful! Please login to join an organization.",
+      );
+      router.replace("/login");
     } catch (error: any) {
       console.log("Registration error:", error);
       if (error.response?.data?.errors) {
         const errors = error.response.data.errors;
         const firstError = Object.keys(errors)[0];
-        const errorMessage = Array.isArray(errors[firstError]) 
-          ? errors[firstError][0] 
+        const errorMessage = Array.isArray(errors[firstError])
+          ? errors[firstError][0]
           : errors[firstError];
-        Alert.alert('Registration Error', errorMessage);
+        Alert.alert("Registration Error", errorMessage);
       } else if (error.response?.data?.message) {
-        Alert.alert('Registration Error', error.response.data.message);
+        Alert.alert("Registration Error", error.response.data.message);
       } else {
-        Alert.alert('Registration Error', 'Registration failed. Please try again.');
+        Alert.alert(
+          "Registration Error",
+          "Registration failed. Please try again.",
+        );
       }
     } finally {
       set({ loading: false });
@@ -231,7 +244,7 @@ export const useAuth = create<AuthState>((set, get) => ({
 
       const userId = get().user?.id;
       if (!userId) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
       // Add the new organization to the list with pending status and member role
@@ -239,56 +252,58 @@ export const useAuth = create<AuthState>((set, get) => ({
         id: response.data.data.organization.id,
         user_id: userId,
         organization_id: response.data.data.organization.id,
-        org_role: 'member',
-        status: 'pending',
+        org_role: "member",
+        status: "pending",
         requested_at: new Date().toISOString(),
-        organization: response.data.data.organization
+        organization: response.data.data.organization,
       };
 
       set({ organizations: [...get().organizations, newOrg] });
 
-      Alert.alert('Success', 'Join request submitted. Waiting for president approval.');
+      Alert.alert(
+        "Success",
+        "Join request submitted. Waiting for president approval.",
+      );
 
       // Redirect based on user role and organization role
       const userRole = get().user?.role;
       const organizations = get().organizations || [];
-      
+
       switch (userRole) {
-        case 'couple':
-          router.replace('/couples/my-trees' as any);
+        case "couple":
+          router.replace("/couples/my-trees" as any);
           break;
-        case 'organization':
+        case "organization":
           // Check if user has an accepted organization and their org_role
-          const acceptedOrg = organizations.find((org: UserOrganization) => org.status === 'accepted');
+          const acceptedOrg = organizations.find(
+            (org: UserOrganization) => org.status === "accepted",
+          );
           if (acceptedOrg) {
-            if (acceptedOrg.org_role === 'president') {
-              router.replace('/organization/president/dashboard' as any);
+            if (acceptedOrg.org_role === "president") {
+              router.replace("/organization/dashboard" as any);
             } else {
-              router.replace('/organization/member/my-trees' as any);
+              router.replace("/organization/dashboard" as any);
             }
           } else {
             // No accepted organization, go to join organization
-            router.replace('/organization/member/join-organization' as any);
+            router.replace("/organization/dashboard" as any);
           }
           break;
-        case 'monitoring staff':
-          router.replace('/monitoring' as any);
+        case "monitoring staff":
+          router.replace("/monitoring" as any);
           break;
-        case 'admin':
-          router.replace('/couples/my-trees' as any);
+        case "admin":
+          router.replace("/couples/my-trees" as any);
           break;
-<<<<<<< HEAD
-        case 'couple':
-          router.replace('/couples/my-trees' as any);
-          break;
-=======
->>>>>>> 7880e0e2bfb2bbe6a6fc94de02bd9ad412713317
         default:
-          router.replace('/couples/my-trees' as any);
+          router.replace("/couples/my-trees" as any);
       }
     } catch (error: any) {
       console.log("Join organization error:", error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to submit join request');
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to submit join request",
+      );
     } finally {
       set({ loading: false });
     }
@@ -300,9 +315,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       await setToken(null);
       set({
         user: null,
-        organizations: []
+        organizations: [],
       });
-      router.replace('/login');
+      router.replace("/login");
     } catch (error) {
       console.log(error);
     }

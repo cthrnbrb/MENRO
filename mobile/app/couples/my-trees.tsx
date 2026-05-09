@@ -27,7 +27,7 @@ interface Tree {
   photo: string;
   planted_at: string;
   synced_at: string;
-  status: 'alive' | 'dead';
+  status: "alive" | "dead";
 }
 
 interface User {
@@ -75,9 +75,9 @@ export default function CoupleMyTreesScreen() {
     if (showLoading && !user) {
       setProfileLoading(true);
     }
-    
+
     try {
-      const response = await axios.get('/user/profile');
+      const response = await axios.get("/user/profile");
       console.log("Profile response:", response.data);
 
       if (response.data && response.data.data) {
@@ -97,7 +97,7 @@ export default function CoupleMyTreesScreen() {
 
   const fetchTrees = async () => {
     try {
-      const response = await axios.get('/trees/my-trees');
+      const response = await axios.get("/trees/my-trees");
       setTrees(response.data.data || []);
     } catch (error) {
       console.error("Error fetching trees:", error);
@@ -159,7 +159,7 @@ export default function CoupleMyTreesScreen() {
                   <Text style={styles.welcomeText}>Welcome, Guest</Text>
                 ) : (
                   <Text style={styles.welcomeText}>
-                    Welcome, {user?.first_name || 'Guest'}
+                    Welcome, {user?.first_name || "Guest"}
                   </Text>
                 )}
               </View>
@@ -211,7 +211,9 @@ export default function CoupleMyTreesScreen() {
                 </View>
                 <View style={styles.statInfo}>
                   <Text style={styles.statLabel}>Total Trees</Text>
-                  <Text style={styles.statValue}>{statistics?.total_trees ?? 0}</Text>
+                  <Text style={styles.statValue}>
+                    {statistics?.total_trees ?? 0}
+                  </Text>
                 </View>
               </View>
               <View style={styles.statItem}>
@@ -239,7 +241,9 @@ export default function CoupleMyTreesScreen() {
                 </View>
                 <View style={styles.statInfo}>
                   <Text style={styles.statLabel}>Alive</Text>
-                  <Text style={styles.statValue}>{statistics?.alive_trees ?? 0}</Text>
+                  <Text style={styles.statValue}>
+                    {statistics?.alive_trees ?? 0}
+                  </Text>
                 </View>
               </View>
               <View style={styles.statItem}>
@@ -251,7 +255,9 @@ export default function CoupleMyTreesScreen() {
                 </View>
                 <View style={styles.statInfo}>
                   <Text style={styles.statLabel}>Dead</Text>
-                  <Text style={styles.statValue}>{statistics?.dead_trees ?? 0}</Text>
+                  <Text style={styles.statValue}>
+                    {statistics?.dead_trees ?? 0}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -261,7 +267,7 @@ export default function CoupleMyTreesScreen() {
         {/* Add Tree Button */}
         <TouchableOpacity
           style={styles.addTreeButton}
-          onPress={() => router.push("/planters")}
+          onPress={() => router.push("/couples/add-tree")}
         >
           <MaterialIcons name="add" size={24} color="white" />
           <Text style={styles.addTreeButtonText}>Add Tree</Text>
@@ -387,11 +393,12 @@ export default function CoupleMyTreesScreen() {
           <Text style={styles.instructionsText}>
             3. Admin will update tree status based on photo
           </Text>
-</View>
+        </View>
 
         {/* Trees List */}
         <View style={styles.treesSection}>
           <Text style={styles.sectionTitle}>Your Trees</Text>
+
           {trees.length === 0 ? (
             <View style={styles.emptyContainer}>
               <MaterialIcons name="eco" size={64} color="#9ca3af" />
@@ -430,16 +437,21 @@ export default function CoupleMyTreesScreen() {
                   </View>
                 </View>
                 <View style={styles.treeCardRight}>
-                  <TouchableOpacity style={styles.detailsButton} onPress={() => handleTreePress(tree)}>
-                    <MaterialIcons name="location-on" size={20} color="#2196F3" />
+                  <TouchableOpacity
+                    style={styles.detailsButton}
+                    onPress={() => handleTreePress(tree)}
+                  >
+                    <MaterialIcons
+                      name="location-on"
+                      size={20}
+                      color="#2196F3"
+                    />
                     <Text style={styles.buttonText}>Details</Text>
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
             ))
           )}
-=======
->>>>>>> 7880e0e2bfb2bbe6a6fc94de02bd9ad412713317
         </View>
       </ScrollView>
       <Footer />

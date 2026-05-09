@@ -183,12 +183,14 @@ class OrganizationController extends Controller
     {
         $organization = Organization::findOrFail($id);
 
-        // Get all users linked to this organization via user_organizations
+        // Get only ACCEPTED users linked to this organization
         $users = User::whereHas('userOrganizations', function ($q) use ($id) {
-                $q->where('organization_id', $id);
+                $q->where('organization_id', $id)
+                  ->where('status', 'accepted');
             })
             ->with(['userOrganizations' => function ($q) use ($id) {
-                $q->where('organization_id', $id);
+                $q->where('organization_id', $id)
+                  ->where('status', 'accepted');
             }])
             ->get()
             ->map(function ($user) {
@@ -199,8 +201,11 @@ class OrganizationController extends Controller
                     'last_name' => $user->last_name,
                     'email' => $user->email,
                     'contact_number' => $user->contact_number,
+                    'photo' => $user->photo,
                     'role' => $user->role,
+                    'org_role' => $userOrg?->org_role ?? 'member',
                     'membership_status' => $userOrg?->status ?? null,
+                    'joined_at' => $userOrg?->joined_at ?? $userOrg?->responded_at,
                 ];
             });
 

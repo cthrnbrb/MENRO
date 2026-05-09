@@ -7,7 +7,6 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,7 +21,6 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'romarybanez2005@gmail.com'],
             [
-                'id' => (string) Str::uuid(),
                 'password' => Hash::make('admin'),
                 'role' => 'admin',
                 'first_name' => 'Romar',
@@ -33,9 +31,10 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Run couple seeder for testing
+        // Run seeders for testing
         $this->call([
             CoupleSeeder::class,
+            OrganizationSeeder::class,
         ]);
 
     }
