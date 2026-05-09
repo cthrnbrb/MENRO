@@ -55,24 +55,44 @@ class TreeController extends Controller
      */
     public function show($id)
     {
-        $tree = Tree::with([
-            'activity',
-            'planter',
-            'monitoringRecords',
-            'monitoringRecords.staff'
-        ])->findOrFail($id);
+        try {
+            $tree = Tree::with([
+                'activity',
+                'planter'
+            ])->findOrFail($id);
 
-        // Get latest status
-        $latestRecord = $tree->monitoringRecords()->latest()->first();
+            // Try to load monitoring records if they exist
+            $latestRecord = null;
+            try {
+                $treeWithMonitoring = Tree::with([
+                    'monitoringRecords',
+                    'monitoringRecords.staff'
+                ])->find($id);
+                
+                if ($treeWithMonitoring) {
+                    $latestRecord = $treeWithMonitoring->monitoringRecords()->latest()->first();
+                }
+            } catch (\Exception $e) {
+                // If monitoring records have issues, continue without them
+                $latestRecord = null;
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'tree' => $tree,
-                'current_status' => $latestRecord?->status ?? 'pending',
-                'last_checked' => $latestRecord?->checked_at,
-            ]
-        ]);
+            // Merge tree data with additional info for mobile app
+            $treeData = $tree->toArray();
+            $treeData['current_status'] = $latestRecord?->status ?? 'alive';
+            $treeData['last_checked'] = $latestRecord?->checked_at;
+            $treeData['tree_species'] = $tree->activity?->tree_species ?? 'Unknown';
+
+            return response()->json([
+                'success' => true,
+                'data' => $treeData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch tree details: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -100,19 +120,13 @@ class TreeController extends Controller
             // Get the activity and verify planter belongs to it
             $activity = PlantingActivity::findOrFail($request->activity_id);
 
-            // Check if current user is authorized (tree planter for this activity)
+            // Check if current user is authorized to plant trees
             $userRole = auth()->user()->role;
 
-            $isAuthorized = in_array($userRole, ['couple', 'organization']) &&
-                auth()->user()->treesAsPlanter()
-                    ->where('activity_id', $activity->id)
-                    ->exists();
+            // Allow users who can plant trees: couple, organization, monitoring staff, admin
+            $isAuthorized = in_array($userRole, ['couple', 'organization', 'monitoring staff', 'admin']);
 
-            // Also allow if user is the assigned planter through participant_member
-            // Or if admin
-            $isAdmin = $userRole === 'admin';
-
-            if (!$isAuthorized && !$isAdmin) {
+            if (!$isAuthorized) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You are not authorized to plant trees for this activity'

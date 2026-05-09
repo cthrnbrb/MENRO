@@ -95,105 +95,96 @@ export default function OrganizationDashboard() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Organizations</Text>
-        <Text style={styles.headerSubtitle}>Manage your organization memberships</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Join Organization Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Join Organization</Text>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+        {/* Join Section */}
+        <View style={styles.joinSection}>
           <View style={styles.joinCard}>
-            <Image 
-              source={codeImage} 
-              style={styles.codeImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.joinCardText}>
-              Enter an organization code to join and collaborate with other members
+            <View style={styles.joinHeader}>
+              <MaterialIcons name="add-circle-outline" size={24} color="#10b981" />
+              <Text style={styles.joinTitle}>Join Organization</Text>
+            </View>
+            <Text style={styles.joinSubtitle}>
+              Enter the class code provided by your organization president
             </Text>
-            <View style={styles.inputContainer}>
-              <MaterialIcons name="code" size={20} color="#6b7280" />
+            <View style={styles.codeInputContainer}>
               <TextInput
-                style={styles.input}
-                placeholder="Enter organization code"
+                style={styles.codeInput}
+                placeholder="Class code"
                 value={orgCode}
                 onChangeText={setOrgCode}
                 placeholderTextColor="#9ca3af"
+                autoCapitalize="characters"
               />
+              <TouchableOpacity
+                style={[styles.joinButton, !orgCode.trim() && styles.joinButtonDisabled]}
+                onPress={handleJoinOrganization}
+                disabled={loading || !orgCode.trim()}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <Text style={styles.joinButtonText}>Join</Text>
+                )}
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.joinButton}
-              onPress={handleJoinOrganization}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.joinButtonText}>Join Organization</Text>
-              )}
-            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Organization List Section */}
-        <View style={styles.section}>
+        {/* Organizations Grid */}
+        <View style={styles.orgsSection}>
           <Text style={styles.sectionTitle}>Your Organizations</Text>
           {organizations.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="business-center" size={64} color="#d1d5db" />
-              <Text style={styles.emptyText}>No organizations yet</Text>
-              <Text style={styles.emptySubtext}>
-                Join an organization to get started
+            <View style={styles.emptyState}>
+              <MaterialIcons name="class" size={64} color="#d1d5db" />
+              <Text style={styles.emptyTitle}>No organizations yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Join an organization to see it here
               </Text>
             </View>
           ) : (
-            organizations.map((org) => (
-              <TouchableOpacity
-                key={org.id}
-                style={styles.orgCard}
-                onPress={() => handleOrganizationPress(org)}
-              >
-                <View style={[styles.orgCardHeader, { backgroundColor: getStatusColor(org.status) }]}>
-                  <FontAwesome name="building" size={32} color="white" />
-                </View>
-                <View style={styles.orgCardBody}>
-                  <Text style={styles.orgName}>
-                    {org.organization?.org_name || 'Unknown Organization'}
-                  </Text>
-                  <Text style={styles.orgCode}>
-                    Code: {org.organization?.organization_code || 'N/A'}
-                  </Text>
-                  <View style={styles.orgMeta}>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusColor(org.status) }
-                      ]}
-                    >
-                      <Text style={styles.statusText}>
+            <View style={styles.orgsGrid}>
+              {organizations.map((org) => (
+                <TouchableOpacity
+                  key={org.id}
+                  style={styles.orgCard}
+                  onPress={() => handleOrganizationPress(org)}
+                >
+                  <View style={[styles.orgCardHeader, { backgroundColor: getStatusColor(org.status) }]}>
+                    <FontAwesome name="building" size={32} color="white" />
+                    <View style={styles.orgCardOverlay}>
+                      <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(org.status) }]} />
+                    </View>
+                  </View>
+                  <View style={styles.orgCardBody}>
+                    <Text style={styles.orgName} numberOfLines={2}>
+                      {org.organization?.org_name || 'Unknown Organization'}
+                    </Text>
+                    <Text style={styles.orgCode}>
+                      {org.organization?.organization_code || 'N/A'}
+                    </Text>
+                    <View style={styles.orgMeta}>
+                      <Text style={styles.orgRole}>
+                        {org.org_role === 'president' ? 'President' : 'Member'}
+                      </Text>
+                      <Text style={styles.orgStatus}>
                         {getStatusText(org.status)}
                       </Text>
                     </View>
-                    {org.status === 'accepted' && (
-                      <View style={styles.roleBadge}>
-                        <Text style={styles.roleText}>
-                          {org.org_role === 'president' ? 'President' : 'Member'}
-                        </Text>
-                      </View>
-                    )}
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
         </View>
 
-        {/* Info Section */}
-        <View style={styles.section}>
-          <View style={styles.infoCard}>
-            <MaterialIcons name="info" size={20} color="#6b7280" />
-            <Text style={styles.infoText}>
-              Organization codes are provided by organization presidents. Contact your organization's president to get the code.
+        {/* Help Section */}
+        <View style={styles.helpSection}>
+          <View style={styles.helpCard}>
+            <MaterialIcons name="help-outline" size={20} color="#6b7280" />
+            <Text style={styles.helpText}>
+              Organization codes are shared by presidents. Ask your organization president for the code.
             </Text>
           </View>
         </View>
@@ -208,186 +199,198 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
   },
   header: {
-    backgroundColor: "#10b981",
+    backgroundColor: "#ffffff",
     paddingTop: 60,
-    paddingBottom: 32,
-    paddingHorizontal: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "white",
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1f2937",
   },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.9)",
-    marginTop: 6,
+  scrollView: {
+    flex: 1,
   },
-  section: {
+  joinSection: {
     padding: 20,
   },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#1e293b",
-    marginBottom: 20,
-  },
   joinCard: {
-    backgroundColor: "white",
-    borderRadius: 20,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
     padding: 24,
-    alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
-  codeImage: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
-    opacity: 0.8,
-  },
-  joinCardText: {
-    fontSize: 15,
-    color: "#64748b",
-    textAlign: "center",
-    marginVertical: 20,
-    lineHeight: 22,
-  },
-  inputContainer: {
+  joinHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f1f5f9",
-    borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    width: "100%",
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: "#e2e8f0",
+    marginBottom: 12,
   },
-  input: {
+  joinTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginLeft: 12,
+  },
+  joinSubtitle: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  codeInputContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  codeInput: {
     flex: 1,
-    marginLeft: 14,
+    backgroundColor: "#f9fafb",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    color: "#1e293b",
+    color: "#1f2937",
+    borderWidth: 2,
+    borderColor: "#e5e7eb",
+    textAlign: "center",
+    fontWeight: "600",
+    letterSpacing: 1,
   },
   joinButton: {
     backgroundColor: "#10b981",
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 16,
-    width: "100%",
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
     alignItems: "center",
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    justifyContent: "center",
+    minWidth: 80,
+  },
+  joinButtonDisabled: {
+    backgroundColor: "#d1d5db",
   },
   joinButtonText: {
     color: "white",
     fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    fontWeight: "600",
   },
-  emptyContainer: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 48,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 5,
+  orgsSection: {
+    padding: 20,
   },
-  emptyText: {
+  sectionTitle: {
     fontSize: 20,
-    color: "#64748b",
-    marginTop: 20,
-    fontWeight: "700",
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 16,
   },
-  emptySubtext: {
-    fontSize: 15,
-    color: "#94a3b8",
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#6b7280",
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#9ca3af",
     marginTop: 8,
     textAlign: "center",
   },
+  orgsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 16,
+  },
   orgCard: {
-    backgroundColor: "white",
-    borderRadius: 20,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    width: "48%",
     marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   orgCardHeader: {
-    height: 120,
-    justifyContent: "flex-end",
-    padding: 20,
+    height: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  orgCardOverlay: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+  },
+  statusIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   orgCardBody: {
-    padding: 20,
+    padding: 16,
   },
   orgName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 4,
+    minHeight: 40,
   },
   orgCode: {
-    fontSize: 14,
-    color: "#64748b",
-    marginBottom: 16,
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 12,
+    fontWeight: "500",
   },
   orgMeta: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  statusText: {
+  orgRole: {
     fontSize: 12,
-    color: "white",
-    fontWeight: "700",
-    letterSpacing: 0.3,
+    color: "#10b981",
+    fontWeight: "600",
   },
-  roleBadge: {
-    backgroundColor: "#6366f1",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+  orgStatus: {
+    fontSize: 11,
+    color: "#6b7280",
+    fontWeight: "500",
   },
-  roleText: {
-    fontSize: 12,
-    color: "white",
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
-  infoCard: {
-    flexDirection: "row",
-    backgroundColor: "#fef3c7",
-    borderRadius: 16,
+  helpSection: {
     padding: 20,
+    paddingTop: 0,
+  },
+  helpCard: {
+    flexDirection: "row",
+    backgroundColor: "#f0f9ff",
+    borderRadius: 12,
+    padding: 16,
     alignItems: "flex-start",
     borderWidth: 1,
-    borderColor: "#fde68a",
+    borderColor: "#bae6fd",
   },
-  infoText: {
+  helpText: {
     flex: 1,
-    fontSize: 14,
-    color: "#92400e",
-    marginLeft: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    color: "#0369a1",
+    marginLeft: 12,
+    lineHeight: 18,
   },
 });

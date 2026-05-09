@@ -267,10 +267,10 @@ export default function CoupleMyTreesScreen() {
         {/* Add Tree Button */}
         <TouchableOpacity
           style={styles.addTreeButton}
-          onPress={() => router.push("/couples/add-tree")}
+          onPress={() => router.push("/couples/geo-tag-tree")}
         >
           <MaterialIcons name="add" size={24} color="white" />
-          <Text style={styles.addTreeButtonText}>Add Tree</Text>
+          <Text style={styles.addTreeButtonText}>Geo-Tag Tree</Text>
         </TouchableOpacity>
 
         {/* Send Photo Update Button - Couples specific */}
@@ -337,7 +337,7 @@ export default function CoupleMyTreesScreen() {
                         color="#6b7280"
                       />
                       <Text style={styles.treeMetaText}>
-                        {tree.latitude.toFixed(4)}, {tree.longitude.toFixed(4)}
+                        {typeof tree.latitude === 'number' ? tree.latitude.toFixed(4) : parseFloat(tree.latitude || '0').toFixed(4)}, {typeof tree.longitude === 'number' ? tree.longitude.toFixed(4) : parseFloat(tree.longitude || '0').toFixed(4)}
                       </Text>
                     </View>
                     <View style={styles.treeMeta}>
@@ -432,7 +432,7 @@ export default function CoupleMyTreesScreen() {
                       Planted: {formatDate(tree.planted_at)}
                     </Text>
                     <Text style={styles.treeLocation}>
-                      {tree.latitude.toFixed(4)}, {tree.longitude.toFixed(4)}
+                      {typeof tree.latitude === 'number' ? tree.latitude.toFixed(4) : parseFloat(tree.latitude || '0').toFixed(4)}, {typeof tree.longitude === 'number' ? tree.longitude.toFixed(4) : parseFloat(tree.longitude || '0').toFixed(4)}
                     </Text>
                   </View>
                 </View>

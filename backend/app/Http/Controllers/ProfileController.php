@@ -30,19 +30,29 @@ class ProfileController extends Controller
         // Calculate survival rate
         $aliveTrees = 0;
         $deadTrees = 0;
-        $trees = Tree::where('planter_id', $user->id)
-            ->with('monitoringRecords')
-            ->get();
-            
-        foreach ($trees as $tree) {
-            $latestRecord = $tree->monitoringRecords()->latest()->first();
-            if ($latestRecord) {
-                if ($latestRecord->status === 'alive') {
-                    $aliveTrees++;
-                } elseif ($latestRecord->status === 'dead') {
-                    $deadTrees++;
+        try {
+            $trees = Tree::where('planter_id', $user->id)
+                ->with('monitoringRecords')
+                ->get();
+                
+            foreach ($trees as $tree) {
+                try {
+                    $latestRecord = $tree->monitoringRecords()->latest()->first();
+                    if ($latestRecord) {
+                        if ($latestRecord->status === 'alive') {
+                            $aliveTrees++;
+                        } elseif ($latestRecord->status === 'dead') {
+                            $deadTrees++;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Skip tree if monitoring records have issues
+                    continue;
                 }
             }
+        } catch (\Exception $e) {
+            // If there's an issue with trees query, set default values
+            $totalTrees = 0;
         }
         
         $survivalRate = $totalTrees > 0 ? round(($aliveTrees / $totalTrees) * 100, 2) : 0;

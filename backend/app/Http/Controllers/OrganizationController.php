@@ -8,6 +8,7 @@ use App\Models\PlantingActivity;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class OrganizationController extends Controller
@@ -267,7 +268,7 @@ class OrganizationController extends Controller
             ], 422);
         }
 
-        $joinRequest = \App\Models\UserOrganization::findOrFail($requestId);
+        $joinRequest = \App\Models\UserOrganization::with('organization')->findOrFail($requestId);
         
         if ($joinRequest->organization_id != $organizationId || $joinRequest->status !== 'pending') {
             return response()->json([

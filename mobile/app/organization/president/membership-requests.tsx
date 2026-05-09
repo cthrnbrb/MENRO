@@ -8,11 +8,16 @@ import {
   Alert,
   RefreshControl,
   Image,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/auth-context';
-import { MaterialIcons, FontAwesome, AntDesign } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import axios from '@/src/api/axios';
+import PresidentFooter from '@/src/components/PresidentFooter';
+
+const { width } = Dimensions.get('window');
 
 interface MembershipRequest {
   id: string;
@@ -53,17 +58,10 @@ export default function MembershipRequests() {
 
   const fetchRequests = async () => {
     try {
-      if (!userOrganization?.organization_id) {
-        console.log('No organization ID found');
-        return;
-      }
+      if (!userOrganization?.organization_id) return;
       
-      console.log('Fetching requests for organization:', userOrganization.organization_id);
-      // Use the correct endpoint for membership requests
       const response = await axios.get(`/organization/${userOrganization.organization_id}/membership-requests`);
-      console.log('Membership requests response:', response.data);
       
-      // Extract pending requests from response and map to expected structure
       const pendingRequests = (response.data.data || []).map((item: any) => ({
         id: item.id?.toString(),
         user_id: item.user_id?.toString(),
@@ -81,7 +79,7 @@ export default function MembershipRequests() {
           photo: item.user.photo || null,
         } : null,
       }));
-      console.log('Mapped pending requests:', pendingRequests);
+      
       setRequests(pendingRequests);
     } catch (error: any) {
       console.error('Error fetching requests:', error);
@@ -111,7 +109,7 @@ export default function MembershipRequests() {
       });
       
       setRequests(requests.filter(req => req.id !== requestId));
-      Alert.alert('Success', 'Membership request approved successfully');
+      Alert.alert('Success', 'Member approved');
     } catch (error: any) {
       console.error('Approve error:', error);
       Alert.alert('Error', error.response?.data?.message || 'Failed to approve request');
@@ -123,7 +121,7 @@ export default function MembershipRequests() {
   const handleReject = async (requestId: string) => {
     Alert.alert(
       'Reject Request',
-      'Are you sure you want to reject this membership request?',
+      'Are you sure you want to reject this request?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -137,7 +135,7 @@ export default function MembershipRequests() {
               });
               
               setRequests(requests.filter(req => req.id !== requestId));
-              Alert.alert('Success', 'Membership request rejected');
+              Alert.alert('Success', 'Member rejected');
             } catch (error: any) {
               Alert.alert('Error', error.response?.data?.message || 'Failed to reject request');
             } finally {
@@ -149,114 +147,288 @@ export default function MembershipRequests() {
     );
   };
 
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" color="#10b981" />
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
+        </View>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-green-600 pt-12 pb-6 px-6">
-        <Text className="text-white text-2xl font-bold">Membership Requests</Text>
-        <Text className="text-green-100 text-sm mt-1">
-          Review and manage new member applications
-        </Text>
+    <View style={styles.container}>
+      {/* Compact Header */}
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>Pending Requests</Text>
+            <Text style={styles.headerSubtitle}>
+              {requests.length} {requests.length === 1 ? 'request' : 'requests'} waiting
+            </Text>
+          </View>
+          {requests.length > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{requests.length}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       <ScrollView 
-        className="flex-1"
+        style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {requests.length === 0 ? (
-          <View className="flex-1 justify-center items-center py-20">
-            <MaterialIcons name="inbox" size={64} color="#9ca3af" />
-            <Text className="text-gray-500 text-lg mt-4">No pending requests</Text>
-            <Text className="text-gray-400 text-sm mt-2">
-              All membership requests have been processed
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconBg}>
+              <MaterialIcons name="check-circle" size={48} color="#10b981" />
+            </View>
+            <Text style={styles.emptyTitle}>All caught up!</Text>
+            <Text style={styles.emptySubtitle}>
+              No pending membership requests
             </Text>
           </View>
         ) : (
-          <View className="px-6 py-4 space-y-4">
+          <View style={styles.requestsList}>
             {requests.map((request) => (
-              <View key={request.id} className="bg-white rounded-xl p-4 shadow-sm">
-                <View className="flex-row">
-                  {/* User Avatar */}
-                  <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center mr-4">
+              <View key={request.id} style={styles.requestCard}>
+                <View style={styles.cardContent}>
+                  {/* Avatar */}
+                  <View style={styles.avatarContainer}>
                     {request.user?.photo ? (
                       <Image
                         source={{ uri: request.user.photo }}
-                        className="w-16 h-16 rounded-full"
+                        style={styles.avatarImage}
                       />
                     ) : (
-                      <FontAwesome name="user" size={24} color="#10b981" />
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarText}>
+                          {request.user ? getInitials(request.user.first_name, request.user.last_name) : '?'}
+                        </Text>
+                      </View>
                     )}
                   </View>
 
-                  {/* User Info */}
-                  <View className="flex-1">
-                    <Text className="text-lg font-semibold text-gray-800">
-                      {request.user ? `${request.user.first_name} ${request.user.middle_name || ''} ${request.user.last_name}` : 'Unknown User'}
+                  {/* User Info - Compact */}
+                  <View style={styles.infoContainer}>
+                    <Text style={styles.userName} numberOfLines={1}>
+                      {request.user ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown User'}
                     </Text>
-                    <Text className="text-gray-600 text-sm">{request.user?.email || 'No email'}</Text>
-                    {request.user?.contact_number && (
-                      <Text className="text-gray-500 text-sm">{request.user.contact_number}</Text>
-                    )}
-                    <View className="flex-row items-center mt-2">
-                      <MaterialIcons name="schedule" size={14} color="#9ca3af" />
-                      <Text className="text-gray-500 text-xs ml-1">
-                        Requested {new Date(request.requested_at).toLocaleDateString()}
+                    <Text style={styles.userEmail} numberOfLines={1}>
+                      {request.user?.email || 'No email'}
+                    </Text>
+                    <View style={styles.dateRow}>
+                      <MaterialIcons name="schedule" size={12} color="#9ca3af" />
+                      <Text style={styles.dateText}>
+                        {new Date(request.requested_at).toLocaleDateString()}
                       </Text>
                     </View>
                   </View>
-                </View>
 
-                {/* Action Buttons */}
-                <View className="flex-row space-x-3 mt-4">
-                  <TouchableOpacity
-                    className={`flex-1 bg-green-500 py-2 px-4 rounded-lg flex-row items-center justify-center ${
-                      processing === request.id ? 'opacity-50' : ''
-                    }`}
-                    onPress={() => handleApprove(request.id)}
-                    disabled={processing === request.id}
-                  >
-                    {processing === request.id ? (
-                      <ActivityIndicator size="small" color="white" />
-                    ) : (
-                      <>
-                        <MaterialIcons name="check-circle" size={18} color="white" />
-                        <Text className="text-white font-semibold ml-2">Approve</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                  {/* Action Buttons - Icon only for clean look */}
+                  <View style={styles.actionsContainer}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.approveBtn, 
+                        processing === request.id && styles.actionBtnDisabled
+                      ]}
+                      onPress={() => handleApprove(request.id)}
+                      disabled={processing === request.id}
+                    >
+                      {processing === request.id ? (
+                        <ActivityIndicator size="small" color="white" />
+                      ) : (
+                        <MaterialIcons name="check" size={20} color="white" />
+                      )}
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    className={`flex-1 bg-red-500 py-2 px-4 rounded-lg flex-row items-center justify-center ${
-                      processing === request.id ? 'opacity-50' : ''
-                    }`}
-                    onPress={() => handleReject(request.id)}
-                    disabled={processing === request.id}
-                  >
-                    {processing === request.id ? (
-                      <ActivityIndicator size="small" color="white" />
-                    ) : (
-                      <>
-                        <MaterialIcons name="cancel" size={18} color="white" />
-                        <Text className="text-white font-semibold ml-2">Reject</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.rejectBtn,
+                        processing === request.id && styles.actionBtnDisabled
+                      ]}
+                      onPress={() => handleReject(request.id)}
+                      disabled={processing === request.id}
+                    >
+                      <MaterialIcons name="close" size={20} color="white" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             ))}
           </View>
         )}
       </ScrollView>
+      <PresidentFooter />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    backgroundColor: '#ffffff',
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  badge: {
+    backgroundColor: '#ef4444',
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: 80,
+    paddingHorizontal: 20,
+  },
+  emptyIconBg: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#d1fae5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+  },
+  requestsList: {
+    padding: 16,
+    gap: 12,
+  },
+  requestCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    marginRight: 14,
+  },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#10b981',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginLeft: 4,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 8,
+  },
+  actionBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionBtnDisabled: {
+    opacity: 0.5,
+  },
+  approveBtn: {
+    backgroundColor: '#10b981',
+  },
+  rejectBtn: {
+    backgroundColor: '#ef4444',
+  },
+});

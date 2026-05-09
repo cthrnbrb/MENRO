@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
-import MonitoringNavFooter from "@/src/components/MonitoringNavFooter";
+import PresidentFooter from "@/src/components/PresidentFooter";
 
 interface Notification {
   id: number;
@@ -20,51 +20,51 @@ interface Notification {
   created_at: string;
 }
 
-// Mock notifications for monitoring staff
+// Mock notifications for president
 const mockNotifications: Notification[] = [
   {
     id: 1,
-    title: "New Assignment",
-    message: "You have been assigned to monitor Green Earth Foundation trees.",
-    type: "monitoring_schedule",
+    title: "New Join Request",
+    message: "John Doe has requested to join your organization.",
+    type: "join_request",
     is_read: false,
     created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
   },
   {
     id: 2,
-    title: "Monitoring Reminder",
-    message: "Q4 assessment for Corporate Green Initiative is due tomorrow.",
+    title: "Activity Reminder",
+    message: "Planting activity scheduled for tomorrow at Barangay 1.",
     type: "activity_reminder",
     is_read: false,
     created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
   },
   {
     id: 3,
-    title: "Assignment Completed",
-    message: "School Environmental Club monitoring has been marked as complete.",
-    type: "monitoring_reassigned",
+    title: "Monitoring Report",
+    message: "Monthly monitoring report is ready for review.",
+    type: "monitoring_schedule",
     is_read: true,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
   },
   {
     id: 4,
-    title: "System Update",
-    message: "New monitoring features have been added to the app.",
-    type: "tree_update_reminder",
+    title: "Certificate Generated",
+    message: "Certificates for recent planting activity have been generated.",
+    type: "certificate_ready",
     is_read: true,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
   },
   {
     id: 5,
-    title: "Weather Alert",
-    message: "Heavy rain expected tomorrow - plan monitoring accordingly.",
-    type: "activity_reminder",
+    title: "Member Milestone",
+    message: "Your organization has reached 50 members!",
+    type: "join_accepted",
     is_read: true,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
   },
 ];
 
-export default function MonitoringNotificationsScreen() {
+export default function PresidentNotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -211,7 +211,7 @@ export default function MonitoringNotificationsScreen() {
           )}
         </View>
       </ScrollView>
-      <MonitoringNavFooter />
+      <PresidentFooter />
     </View>
   );
 }

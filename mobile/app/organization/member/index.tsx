@@ -260,7 +260,7 @@ export default function OrganizationMyTreesScreen() {
                         color="#6b7280"
                       />
                       <Text style={styles.treeMetaText}>
-                        {tree.latitude.toFixed(4)}, {tree.longitude.toFixed(4)}
+                        {typeof tree.latitude === 'number' ? tree.latitude.toFixed(4) : parseFloat(tree.latitude || '0').toFixed(4)}, {typeof tree.longitude === 'number' ? tree.longitude.toFixed(4) : parseFloat(tree.longitude || '0').toFixed(4)}
                       </Text>
                     </View>
                     <View style={styles.treeMeta}>

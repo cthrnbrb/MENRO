@@ -85,24 +85,28 @@ export default function GeoTagTreeScreen() {
     try {
       setLoading(true);
       
-      // Create form data for API submission
-      const treeData = new FormData();
-      treeData.append("latitude", location.coords.latitude.toString());
-      treeData.append("longitude", location.coords.longitude.toString());
-      treeData.append("photo", {
-        uri: photo,
-        type: "image/jpeg",
-        name: "tree_photo.jpg",
-      } as any);
+      // Convert photo to Base64
+      const response = await fetch(photo);
+      const blob = await response.blob();
+      const base64data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+        
+      // Create JSON payload
+      const treeData = {
+        activity_id: 2,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        photo: base64data,
+      };
 
       // Submit to backend
-      const response = await axios.post('/trees', treeData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const apiResponse = await axios.post('/trees', treeData);
 
-      if (response.data) {
+      if (apiResponse.data) {
         Alert.alert("Success", "Tree geo-tagged successfully!", [
           { text: "OK", onPress: () => router.push("/monitoring") },
         ]);

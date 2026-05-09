@@ -128,7 +128,7 @@ export default function OrganizationTreeDetailsScreen() {
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>GPS Coordinates</Text>
                 <Text style={styles.infoValue}>
-                  {tree.latitude.toFixed(7)}, {tree.longitude.toFixed(7)}
+                  {typeof tree.latitude === 'number' ? tree.latitude.toFixed(7) : parseFloat(tree.latitude || '0').toFixed(7)}, {typeof tree.longitude === 'number' ? tree.longitude.toFixed(7) : parseFloat(tree.longitude || '0').toFixed(7)}
                 </Text>
               </View>
             </View>
