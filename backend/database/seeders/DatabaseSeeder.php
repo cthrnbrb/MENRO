@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'romarybanez2005@gmail.com'],
             [
-                'id' => (string) Str::uuid(),
                 'password' => Hash::make('admin'),
                 'role' => 'admin',
                 'first_name' => 'Romar',
@@ -36,6 +35,7 @@ class DatabaseSeeder extends Seeder
         // Run couple seeder for testing
         $this->call([
             CoupleSeeder::class,
+            MonitoringStaffSeeder::class,
         ]);
 
     }

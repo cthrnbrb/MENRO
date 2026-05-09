@@ -9,6 +9,7 @@ import {
   Alert,
   TextInput,
   Image,
+  ImageBackground,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -16,6 +17,7 @@ import { MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { getToken, setToken } from "@/src/services/auth-storage";
 import * as ImagePicker from 'expo-image-picker';
 import axios from "@/src/api/axios";
+import MonitoringNavFooter from "@/src/components/MonitoringNavFooter";
 
 interface User {
   id: number;
@@ -168,6 +170,8 @@ export default function MonitoringProfileScreen() {
     );
   };
 
+  const API_BASE = axios.defaults.baseURL?.replace(/\/api$/, "") || "http://192.168.1.2:8000";
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -176,6 +180,302 @@ export default function MonitoringProfileScreen() {
       day: "numeric",
     });
   };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: "#fff",
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 40,
+    },
+    errorText: {
+      fontSize: 18,
+      color: "#6b7280",
+      marginTop: 16,
+    },
+    header: {
+      width: "100%",
+      height: 280,
+    },
+    headerImage: {
+      resizeMode: "cover",
+    },
+    headerOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      paddingTop: 50,
+      paddingBottom: 20,
+    },
+    headerTopBar: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      marginBottom: 16,
+    },
+    backButton: {
+      padding: 4,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: "#fff",
+    },
+    headerContent: {
+      alignItems: "center",
+    },
+    avatarWrapper: {
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    avatarContainer: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      overflow: "hidden",
+    },
+    avatar: {
+      width: 120,
+      height: 120,
+    },
+    avatarPlaceholder: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      overflow: "hidden",
+    },
+    avatarOverlay: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: "rgba(0,0,0,0.3)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    photoEditButton: {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+      backgroundColor: "#10b981",
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 3,
+      borderColor: "#fff",
+    },
+    savePhotoButton: {
+      position: "absolute",
+      bottom: -40,
+      backgroundColor: "#10b981",
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    savePhotoButtonText: {
+      color: "white",
+      fontSize: 12,
+      fontWeight: "600",
+      marginLeft: 4,
+    },
+    headerName: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: "#fff",
+    },
+    headerRole: {
+      fontSize: 16,
+      color: "rgba(255,255,255,0.8)",
+      marginTop: 4,
+    },
+    section: {
+      padding: 20,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: "#1f2937",
+    },
+    editButton: {
+      padding: 8,
+    },
+    infoCard: {
+      backgroundColor: "#fff",
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: "#e5e7eb",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    infoRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      marginBottom: 16,
+    },
+    infoContent: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    infoLabel: {
+      fontSize: 12,
+      color: "#6b7280",
+      marginBottom: 4,
+    },
+    infoValue: {
+      fontSize: 14,
+      color: "#1f2937",
+      fontWeight: "500",
+    },
+    editRow: {
+      marginBottom: 16,
+    },
+    editLabel: {
+      fontSize: 12,
+      color: "#6b7280",
+      marginBottom: 4,
+    },
+    editInput: {
+      backgroundColor: "#f9fafb",
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "#e5e7eb",
+      fontSize: 14,
+      color: "#1f2937",
+    },
+    editActions: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      marginTop: 8,
+    },
+    cancelButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      marginRight: 8,
+      borderRadius: 8,
+      backgroundColor: "#f3f4f6",
+    },
+    cancelButtonText: {
+      color: "#6b7280",
+      fontSize: 14,
+      fontWeight: "500",
+    },
+    saveButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 8,
+      backgroundColor: "#10b981",
+    },
+    saveButtonText: {
+      color: "white",
+      fontSize: 14,
+      fontWeight: "500",
+    },
+    logoutButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      margin: 20,
+      backgroundColor: "#fef2f2",
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: "#fecaca",
+    },
+    logoutButtonText: {
+      color: "#ef4444",
+      fontSize: 16,
+      fontWeight: "600",
+      marginLeft: 8,
+    },
+    notificationContainer: {
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: '#e5e7eb',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    settingsList: {
+      gap: 0,
+    },
+    settingItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#fff',
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f3f4f6',
+    },
+    settingLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 12,
+    },
+    settingLabel: {
+      fontSize: 14,
+      color: '#1f2937',
+    },
+    helpList: {
+      gap: 0,
+    },
+    helpItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#fff',
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f3f4f6',
+    },
+    helpLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 12,
+    },
+    helpLabel: {
+      fontSize: 14,
+      color: '#1f2937',
+    },
+    seeAllButton: {
+      marginLeft: 'auto',
+    },
+    seeAllText: {
+      fontSize: 12,
+      color: '#10b981',
+      fontWeight: '500',
+    },
+  });
 
   if (loading) {
     return (
@@ -200,51 +500,74 @@ export default function MonitoringProfileScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View style={styles.avatarWrapper}>
+        <ImageBackground
+          source={require("@/assets/images/forest1.jpg")}
+          style={styles.header}
+          imageStyle={styles.headerImage}
+        >
+          <View style={styles.headerOverlay}>
+            <View style={styles.headerTopBar}>
               <TouchableOpacity
-                onPress={pickImage}
-                style={styles.avatarContainer}
+                onPress={() => router.back()}
+                style={styles.backButton}
               >
-                {photo ? (
-                  <Image
-                    source={{
-                      uri: photo.startsWith("http")
-                        ? photo
-                        : `http://192.168.1.52:8000/${photo}`,
-                    }}
-                    style={styles.avatar}
-                  />
-                ) : (
-                  <View style={styles.avatarPlaceholder}>
-                    <MaterialIcons name="person" size={48} color="#10b981" />
-                  </View>
-                )}
+                <MaterialIcons name="arrow-back" size={28} color="#fff" />
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={pickImage}
-                style={styles.photoEditButton}
-              >
-                <MaterialIcons name="edit" size={16} color="white" />
-              </TouchableOpacity>
+              <Text style={styles.headerTitle}>My Profile</Text>
+              <View style={{ width: 28 }} />
             </View>
-            {photo && photo !== user?.photo && (
-              <TouchableOpacity
-                onPress={handleSavePhoto}
-                style={styles.savePhotoButton}
-              >
-                <MaterialIcons name="check" size={16} color="white" />
-                <Text style={styles.savePhotoButtonText}>Save Photo</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={styles.headerName}>
-              {user.first_name} {user.last_name}
-            </Text>
-            <Text style={styles.headerRole}>{user.role}</Text>
+            <View style={styles.headerContent}>
+              <View style={styles.avatarWrapper}>
+                <TouchableOpacity
+                  onPress={pickImage}
+                  style={styles.avatarContainer}
+                >
+                  {photo ? (
+                    <Image
+                      source={{
+                        uri: photo.startsWith("http") || photo.startsWith("file://")
+                          ? photo
+                          : `${API_BASE}/${photo}`,
+                      }}
+                      style={styles.avatar}
+                    />
+                  ) : (
+                    <ImageBackground
+                      source={require("@/assets/images/forest1.jpg")}
+                      style={styles.avatarPlaceholder}
+                      imageStyle={{ borderRadius: 60 }}
+                    >
+                      <View style={styles.avatarOverlay}>
+                        <MaterialIcons name="person" size={48} color="#fff" />
+                      </View>
+                    </ImageBackground>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={pickImage}
+                  style={styles.photoEditButton}
+                >
+                  <MaterialIcons name="edit" size={16} color="white" />
+                </TouchableOpacity>
+                {photo && photo !== user?.photo && (
+                  <TouchableOpacity
+                    onPress={handleSavePhoto}
+                    style={styles.savePhotoButton}
+                  >
+                    <MaterialIcons name="check" size={16} color="white" />
+                    <Text style={styles.savePhotoButtonText}>Save Photo</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <Text style={styles.headerName}>
+                {user.first_name} {user.last_name}
+              </Text>
+              <Text style={styles.headerRole}>{user.role}</Text>
+            </View>
           </View>
-        </View>
+        </ImageBackground>
 
+        
         {/* Personal Information */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -372,216 +695,81 @@ export default function MonitoringProfileScreen() {
           </View>
         </View>
 
+        
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Settings</Text>
+          </View>
+          <View style={styles.settingsList}>
+            <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/monitoring/settings')}>
+              <View style={styles.settingLeft}>
+                <MaterialIcons name="notifications" size={20} color="#6b7280" />
+                <Text style={styles.settingLabel}>Notifications</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/monitoring/settings')}>
+              <View style={styles.settingLeft}>
+                <MaterialIcons name="lock" size={20} color="#6b7280" />
+                <Text style={styles.settingLabel}>Privacy & Security</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/monitoring/settings')}>
+              <View style={styles.settingLeft}>
+                <MaterialIcons name="language" size={20} color="#6b7280" />
+                <Text style={styles.settingLabel}>Language</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/monitoring/settings')}>
+              <View style={styles.settingLeft}>
+                <MaterialIcons name="help-outline" size={20} color="#6b7280" />
+                <Text style={styles.settingLabel}>Help & Support</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Help & Support</Text>
+          </View>
+          <View style={styles.helpList}>
+            <TouchableOpacity style={styles.helpItem}>
+              <View style={styles.helpLeft}>
+                <MaterialIcons name="menu-book" size={20} color="#10b981" />
+                <Text style={styles.helpLabel}>User Guide</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.helpItem}>
+              <View style={styles.helpLeft}>
+                <MaterialIcons name="contact-support" size={20} color="#10b981" />
+                <Text style={styles.helpLabel}>Contact Support</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.helpItem}>
+              <View style={styles.helpLeft}>
+                <MaterialIcons name="info" size={20} color="#10b981" />
+                <Text style={styles.helpLabel}>About</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Logout Button */}
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <MaterialIcons name="logout" size={24} color="#ef4444" />
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
-  );
-}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-  },
-  errorText: {
-    fontSize: 18,
-    color: "#6b7280",
-    marginTop: 16,
-  },
-  header: {
-    backgroundColor: "#f0fdf4",
-    padding: 20,
-    paddingTop: 60,
-    alignItems: "center",
-  },
-  headerContent: {
-    alignItems: "center",
-  },
-  avatarWrapper: {
-    position: "relative",
-    marginBottom: 12,
-  },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#d1fae5",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  avatar: {
-    width: "100%",
-    height: "100%",
-  },
-  avatarPlaceholder: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  photoEditButton: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#10b981",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
-  savePhotoButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#10b981",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 8,
-  },
-  savePhotoButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-    marginLeft: 4,
-  },
-  headerName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#166534",
-  },
-  headerRole: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 4,
-  },
-  section: {
-    padding: 20,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1f2937",
-  },
-  editButton: {
-    padding: 8,
-  },
-  infoCard: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 16,
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: "#1f2937",
-    fontWeight: "500",
-  },
-  editRow: {
-    marginBottom: 16,
-  },
-  editLabel: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginBottom: 4,
-  },
-  editInput: {
-    backgroundColor: "#f9fafb",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    fontSize: 14,
-    color: "#1f2937",
-  },
-  editActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 8,
-  },
-  cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6",
-  },
-  cancelButtonText: {
-    color: "#6b7280",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "#10b981",
-  },
-  saveButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 20,
-    backgroundColor: "#fef2f2",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#fecaca",
-  },
-  logoutButtonText: {
-    color: "#ef4444",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-});
+      <MonitoringNavFooter />
+    </View>
+);
+
+}
