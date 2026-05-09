@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { View, Text, Image, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "@/src/context/auth-context";
@@ -22,7 +31,7 @@ export default function CodeScreen() {
     try {
       setError("");
       await joinOrganization({ code });
-    } catch (err) {
+    } catch (e) {
       setError("Failed to join organization. Please try again.");
     }
   };
@@ -32,7 +41,7 @@ export default function CodeScreen() {
       <StatusBar style="dark" />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         {/* Hero Section */}
@@ -84,15 +93,26 @@ export default function CodeScreen() {
             {/* Error Message */}
             {error && (
               <View className="flex-row items-center justify-center mt-3">
-                <MaterialIcons name="error-outline" size={16} color="#EF4444" className="mr-2" />
-                <Text className="text-red-500 text-sm font-medium">{error}</Text>
+                <MaterialIcons
+                  name="error-outline"
+                  size={16}
+                  color="#EF4444"
+                  className="mr-2"
+                />
+                <Text className="text-red-500 text-sm font-medium">
+                  {error}
+                </Text>
               </View>
             )}
           </View>
 
           {/* Submit Button */}
           <TouchableOpacity
-            className={loading || !code.trim() ? 'py-4 rounded-full items-center shadow-md w-full mb-4 bg-gray-200 border border-gray-300' : 'py-4 rounded-full items-center shadow-md w-full mb-4 bg-emerald-500 border border-emerald-600 shadow-emerald-100'}
+            className={
+              loading || !code.trim()
+                ? "py-4 rounded-full items-center shadow-md w-full mb-4 bg-gray-200 border border-gray-300"
+                : "py-4 rounded-full items-center shadow-md w-full mb-4 bg-emerald-500 border border-emerald-600 shadow-emerald-100"
+            }
             onPress={handleJoinOrganization}
             disabled={loading || !code.trim()}
           >

@@ -25,9 +25,10 @@ interface Tree {
   synced_at: string;
   activity_id: number;
   planter_id: number;
+  status: 'alive' | 'dead';
 }
 
-export default function TreeDetailsScreen() {
+export default function OrganizationTreeDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams() as { id: string };
   const [tree, setTree] = useState<Tree | null>(null);
@@ -116,6 +117,11 @@ export default function TreeDetailsScreen() {
             <View style={styles.infoHeader}>
               <MaterialIcons name="nature" size={24} color="#10b981" />
               <Text style={styles.infoTitle}>{tree.tree_species}</Text>
+              <View style={[styles.statusBadge, tree.status === 'alive' ? styles.aliveBadge : styles.deadBadge]}>
+                <Text style={[styles.statusText, tree.status === 'alive' ? styles.aliveText : styles.deadText]}>
+                  {tree.status}
+                </Text>
+              </View>
             </View>
             <View style={styles.infoRow}>
               <MaterialIcons name="location-on" size={18} color="#6b7280" />
@@ -279,6 +285,28 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1f2937",
     marginLeft: 12,
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  aliveBadge: {
+    backgroundColor: "#d1fae5",
+  },
+  deadBadge: {
+    backgroundColor: "#fee2e2",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  aliveText: {
+    color: "#065f46",
+  },
+  deadText: {
+    color: "#991b1b",
   },
   infoRow: {
     flexDirection: "row",

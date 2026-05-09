@@ -41,7 +41,7 @@ class Notification extends Model
      */
     public const ROLE_TARGETS = [
         'admin' => 'admin',
-        'staff' => 'staff',
+        'monitoring staff' => 'monitoring staff',
         'organization' => 'organization',
         'couple' => 'couple',
     ];

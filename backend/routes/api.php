@@ -93,5 +93,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/{id}/organizations', function ($id) {
         return \App\Models\UserOrganization::where('user_id', $id)->get();
     });
+    
+    // Organization Members & Membership Requests
+    Route::prefix('organization')->group(function () {
+        Route::get('/{id}/members', [OrganizationController::class, 'getUsers']);
+        Route::get('/{id}/membership-requests', [OrganizationController::class, 'getPendingRequests']);
+        Route::post('/{organizationId}/members/{requestId}/respond', [OrganizationController::class, 'respondToJoinRequest']);
+        Route::post('/{organizationId}/members/{userId}/remove', [OrganizationController::class, 'removeMember']);
+    });
+    
     Route::get('/calendar-events', [DashboardController::class, 'calendarEvents']);
 });

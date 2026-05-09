@@ -17,15 +17,14 @@ import { StatusBar } from "expo-status-bar";
 import { MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
-import { getToken } from "@/src/services/auth-storage";
 import axios from "@/src/api/axios";
+import MemberFooter from "../../../src/components/MemberFooter";
 
-export default function GeoTagTreeScreen() {
+export default function MemberGeoTagTreeScreen() {
   const router = useRouter();
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [loading, setLoading] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
-  const [formData, setFormData] = useState({});
 
   useEffect(() => {
     getCurrentLocation();
@@ -50,8 +49,8 @@ export default function GeoTagTreeScreen() {
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Denied", "Camera permission is required to take photos.");
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
         return;
       }
 
@@ -85,7 +84,6 @@ export default function GeoTagTreeScreen() {
     try {
       setLoading(true);
       
-      // Create form data for API submission
       const treeData = new FormData();
       treeData.append("latitude", location.coords.latitude.toString());
       treeData.append("longitude", location.coords.longitude.toString());
@@ -95,7 +93,6 @@ export default function GeoTagTreeScreen() {
         name: "tree_photo.jpg",
       } as any);
 
-      // Submit to backend
       const response = await axios.post('/trees', treeData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -104,7 +101,7 @@ export default function GeoTagTreeScreen() {
 
       if (response.data) {
         Alert.alert("Success", "Tree geo-tagged successfully!", [
-          { text: "OK", onPress: () => router.push("/planters/my-trees") },
+          { text: "OK", onPress: () => router.push("/organization/member" as any) },
         ]);
       }
     } catch (error: any) {
@@ -119,7 +116,6 @@ export default function GeoTagTreeScreen() {
     }
   };
 
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -128,14 +124,11 @@ export default function GeoTagTreeScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header */}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Geo-Tag Tree</Text>
             <Text style={styles.headerSubtitle}>Add a new tree to the system</Text>
           </View>
 
-          {/* Location Display */}
           <View style={styles.section}>
             <View style={styles.locationCard}>
               <MaterialIcons name="location-on" size={24} color="#10b981" />
@@ -155,7 +148,6 @@ export default function GeoTagTreeScreen() {
             </View>
           </View>
 
-          {/* Photo Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Tree Photo</Text>
             <TouchableOpacity onPress={pickImage} style={styles.photoCard}>
@@ -170,7 +162,6 @@ export default function GeoTagTreeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Submit Button */}
           <TouchableOpacity
             onPress={handleSubmit}
             style={styles.submitButton}
@@ -184,6 +175,7 @@ export default function GeoTagTreeScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      <MemberFooter />
     </View>
   );
 }
@@ -197,11 +189,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     backgroundColor: "#f0fdf4",
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#166534",
   },
   headerSubtitle: {
     fontSize: 16,
@@ -264,24 +251,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: "#6b7280",
     fontSize: 14,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f9fafb",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#1f2937",
   },
   submitButton: {
     margin: 20,
