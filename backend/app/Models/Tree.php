@@ -14,6 +14,7 @@ class Tree extends Model
 
     protected $fillable = [
         'activity_id',
+        'couple_planting_sched_id',
         'planter_id',
         'latitude',
         'longitude',
@@ -33,6 +34,11 @@ class Tree extends Model
     public function activity()
     {
         return $this->belongsTo(PlantingActivity::class, 'activity_id');
+    }
+
+    public function couplePlantingSchedule()
+    {
+        return $this->belongsTo(CouplePlantingActivity::class, 'couple_planting_sched_id');
     }
 
     public function planter()
